@@ -12,8 +12,6 @@ import (
 func New() *gorm.DB {
 	dsn := os.Getenv("DB_URL")
 
-	fmt.Println("Connecting to database with DSN:", dsn)
-
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {

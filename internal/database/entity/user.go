@@ -28,25 +28,4 @@ type User struct {
 	UpdatedAt           time.Time        `gorm:"autoUpdateTime"`
 }
 
-type Follow struct {
-	ID          uint `gorm:"primaryKey;autoIncrement"`
-	FollowerID  uint
-	FollowingID uint
-	Follower    User      `gorm:"foreignKey:FollowerID;references:ID"`
-	Following   User      `gorm:"foreignKey:FollowingID;references:ID"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
-}
 
-type Notification struct {
-	ID         uint `gorm:"primaryKey;autoIncrement"`
-	Content    string
-	Type       string
-	IsRead     bool
-	ReceiverID uint
-	TriggerID  uint
-	Receiver   User      `gorm:"foreignKey:ReceiverID;references:ID"`
-	Trigger    User      `gorm:"foreignKey:TriggerID;references:ID"`
-	CreatedAt  time.Time `gorm:"autoCreateTime"`
-	UpdatedAt  time.Time `gorm:"autoUpdateTime"`
-}

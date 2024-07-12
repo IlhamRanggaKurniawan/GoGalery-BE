@@ -2,11 +2,10 @@ package entity
 
 import "time"
 
-type Feedback struct {
+type SaveContent struct {
 	ID        uint `gorm:"primaryKey;autoIncrement"`
 	UserID    uint
-	Message   string
-	User      User      `gorm:"foreignKey:UserID;reference:ID"`
+	ContentID int
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }

@@ -1,0 +1,87 @@
+package content
+
+import (
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+	"gorm.io/gorm"
+)
+
+type ContentRepository interface {
+	Create(uploaderId *uint, caption *string, url *string) (*entity.Content, error)
+	FindAll() (*[]entity.Content, error)
+	FindOne(id *uint) (*entity.Content, error)
+	Update(id *uint, caption *string) (*entity.Content, error)
+	DeleteOne(id *uint) error
+}
+
+type contentRepository struct {
+	db *gorm.DB
+}
+
+func NewContentRepository(db *gorm.DB) ContentRepository {
+	return &contentRepository{db: db}
+}
+
+func (r *contentRepository) Create(uploaderId *uint, caption *string, url *string) (*entity.Content, error) {
+	content := entity.Content{
+		UploaderID: *uploaderId,
+		Caption:    *caption,
+		URL:        *url,
+	}
+
+	err := r.db.Create(&content).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &content, nil
+}
+
+func (r *contentRepository) FindAll() (*[]entity.Content, error) {
+	var contents []entity.Content
+
+	err := r.db.Preload("Uploader").Find(&contents).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &contents, nil
+}
+
+func (r *contentRepository) FindOne(id *uint) (*entity.Content, error) {
+	var content entity.Content
+
+	err := r.db.Preload("Uploader").Where("id = ?", *id).Take(&content).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &content, nil
+}
+
+func (r *contentRepository) Update(id *uint, caption *string) (*entity.Content, error) {
+
+	content, err := r.FindOne(id)
+
+	if err != nil {
+		return nil, err
+	}
+	content.Caption = *caption
+
+	r.db.Save(&content)
+
+	return content, nil
+}
+
+func (r *contentRepository) DeleteOne(id *uint) error {
+
+	err := r.db.Delete(&entity.Content{}, *id).Error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
