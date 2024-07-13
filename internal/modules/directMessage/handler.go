@@ -1,27 +1,27 @@
-package comment
+package directmessage
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 )
 
 type Handler struct {
-	commentService CommentService
+	directMessageService DirectMessageService
 }
 
 type input struct {
-	ID        uint   `json:"id"`
-	ContentID uint   `json:"contentId"`
-	UserID    uint   `json:"userId"`
-	Message   string `json:"message"`
+	ID           uint `json:"id"`
+	UserID       uint `json:"userId"`
+	Participants []entity.User
 }
 
-func NewHandler(commentService CommentService) Handler {
-	return Handler{commentService}
+func NewHandler(directMessageService DirectMessageService) Handler {
+	return Handler{directMessageService}
 }
 
-func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateDirectMessage(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -31,19 +31,17 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(input)
-
-	content, _ := h.commentService.SendComment(input.UserID, input.ContentID, input.Message)
+	feedback, _ := h.directMessageService.CreateDirectMessage(input.Participants)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(feedback); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllDirectMessages(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -53,17 +51,17 @@ func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.GetAllComments(input.ContentID)
+	feedback, _ := h.directMessageService.GetAllDirectMessages(input.UserID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(feedback); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetOneDirectMessage(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -73,17 +71,17 @@ func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.updateComment(input.ID, input.Message)
+	feedback, _ := h.directMessageService.GetOneDirectMessage(input.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(feedback); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeleteDirectMessage(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -93,7 +91,7 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.commentService.DeleteContent(input.ID)
+	err = h.directMessageService.DeleteDirectMessage(input.ID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

@@ -7,9 +7,9 @@ type Content struct {
 	UploaderID uint
 	Caption    string
 	URL        string        `gorm:"unique"`
-	Likes      []LikeContent `gorm:"foreignKey:ContentID"`
-	Save       []SaveContent `gorm:"foreignKey:ContentID"`
-	Comments   []Comment     `gorm:"foreignKey:ContentID"`
+	Likes      []LikeContent `gorm:"foreignKey:ContentID;constraint:OnDelete:CASCADE;"`
+	Save       []SaveContent `gorm:"foreignKey:ContentID;constraint:OnDelete:CASCADE;"`
+	Comments   []Comment     `gorm:"foreignKey:ContentID;constraint:OnDelete:CASCADE;"`
 	CreatedAt  time.Time     `gorm:"autoCreateTime"`
 	UpdatedAt  time.Time     `gorm:"autoUpdateTime"`
 }

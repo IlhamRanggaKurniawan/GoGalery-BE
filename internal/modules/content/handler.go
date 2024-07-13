@@ -30,7 +30,7 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.contentService.UploadContent(&input.UploaderID, &input.Caption, &input.Url)
+	content, _ := h.contentService.UploadContent(input.UploaderID, input.Caption, input.Url)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -50,7 +50,7 @@ func (h *Handler) UpdateContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.contentService.UpdateContent(&input.ID, &input.Caption)
+	content, _ := h.contentService.UpdateContent(input.ID, input.Caption)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -82,7 +82,7 @@ func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.contentService.GetOneContent(&input.ID)
+	content, _ := h.contentService.GetOneContent(input.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -102,7 +102,7 @@ func (h *Handler) DeleteContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.contentService.DeleteContent(&input.ID)
+	err = h.contentService.DeleteContent(input.ID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

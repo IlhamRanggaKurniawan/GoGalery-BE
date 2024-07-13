@@ -1,28 +1,28 @@
-package user
+package groupchat
 
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 )
 
 type Handler struct {
-	userService UserService
+	groupChatService GroupChatService
 }
 
 type input struct {
-	Id         uint   `json:"id"`
-	Username   string `json:"username"`
-	Email      string `json:"email"`
-	Password   string `json:"password"`
-	Bio        string `json:"bio"`
-	ProfileUrl string `json:"profileUrl"`
+	ID         uint `json:"id"`
+	UserID     uint `json:"userId"`
+	Members    []entity.User
+	PictureUrl string `json:"pictureUrl"`
 }
 
-func NewHandler(userService UserService) Handler {
-	return Handler{userService}
+func NewHandler(groupChatService GroupChatService) Handler {
+	return Handler{groupChatService}
 }
 
-func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateGroupChat(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -32,17 +32,17 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := h.userService.Register(input.Username, input.Email, input.Password)
+	feedback, _ := h.groupChatService.CreateGroupChat(input.Members)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(user); err != nil {
+	if err := json.NewEncoder(w).Encode(feedback); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllGroupChats(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -52,17 +52,17 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := h.userService.Login(input.Username, input.Password)
+	feedback, _ := h.groupChatService.GetAllGroupChats(input.UserID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(user); err != nil {
+	if err := json.NewEncoder(w).Encode(feedback); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetOneGroupChat(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -72,17 +72,17 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := h.userService.UpdateUser(&input.Username, &input.Bio, &input.ProfileUrl, &input.Password)
+	feedback, _ := h.groupChatService.GetOneGroupChat(input.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(user); err != nil {
+	if err := json.NewEncoder(w).Encode(feedback); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) FindAllUsers(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateGroupChat(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -92,17 +92,17 @@ func (h *Handler) FindAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, _ := h.userService.FindAllUsers(input.Username)
+	feedback, _ := h.groupChatService.UpdateGroupChat(input.ID, input.PictureUrl)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(users); err != nil {
+	if err := json.NewEncoder(w).Encode(feedback); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeleteGroupChat(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -112,27 +112,7 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := h.userService.FindOneUser(input.Username)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = h.userService.DeleteUser(input.Id)
+	err = h.groupChatService.DeleteGroupChat(input.ID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -140,6 +120,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	resp := struct {
 		Message string `json:"message"`
 	}{

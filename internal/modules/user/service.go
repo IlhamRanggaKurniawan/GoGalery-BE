@@ -6,12 +6,12 @@ import (
 )
 
 type UserService interface {
-	Register(username *string, email *string, password *string) (*entity.User, error)
-	Login(username *string, password string) (*entity.User, error)
+	Register(username string, email string, password string) (*entity.User, error)
+	Login(username string, password string) (*entity.User, error)
 	UpdateUser(username *string, bio *string, profileUrl *string, password *string) (*entity.User, error)
-	FindAllUsers(username *string) (*[]entity.User, error)
-	FindOneUser(username *string) (*entity.User, error)
-	DeleteUser(id *uint) error
+	FindAllUsers(username string) (*[]entity.User, error)
+	FindOneUser(username string) (*entity.User, error)
+	DeleteUser(id uint) error
 }
 
 type userService struct {
@@ -24,13 +24,13 @@ func NewUserService(userRepository UserRepository) UserService {
 	}
 }
 
-func (s *userService) Register(username *string, email *string, password *string) (*entity.User, error) {
+func (s *userService) Register(username string, email string, password string) (*entity.User, error) {
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(*password), bcrypt.DefaultCost)
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	hashedPasswordStr := string(hashedPassword)
 
-	user, err := s.userRepository.Create(username, email, &hashedPasswordStr)
+	user, err := s.userRepository.Create(username, email, hashedPasswordStr)
 
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (s *userService) Register(username *string, email *string, password *string
 	return user, nil
 }
 
-func (s *userService) Login(username *string, password string) (*entity.User, error) {
+func (s *userService) Login(username string, password string) (*entity.User, error) {
 
 	user, err := s.userRepository.FindOne(username)
 
@@ -67,7 +67,7 @@ func (s *userService) UpdateUser(username *string, bio *string, profileUrl *stri
 	return user, nil
 }
 
-func (s *userService) FindAllUsers(username *string) (*[]entity.User, error) {
+func (s *userService) FindAllUsers(username string) (*[]entity.User, error) {
 
 	users, err := s.userRepository.FindAll(username)
 
@@ -78,7 +78,7 @@ func (s *userService) FindAllUsers(username *string) (*[]entity.User, error) {
 	return users, nil
 }
 
-func (s *userService) FindOneUser(username *string) (*entity.User, error) {
+func (s *userService) FindOneUser(username string) (*entity.User, error) {
 
 	user, err := s.userRepository.FindOne(username)
 
@@ -89,7 +89,7 @@ func (s *userService) FindOneUser(username *string) (*entity.User, error) {
 	return user, nil
 }
 
-func (s *userService) DeleteUser(id *uint) error {
+func (s *userService) DeleteUser(id uint) error {
 
 	err := s.userRepository.DeleteOne(id)
 

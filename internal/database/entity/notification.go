@@ -6,7 +6,7 @@ type Notification struct {
 	ID         uint `gorm:"primaryKey;autoIncrement"`
 	Content    string
 	Type       string
-	IsRead     bool
+	IsRead     bool `gorm:"default:false"`
 	ReceiverID uint
 	TriggerID  uint
 	CreatedAt  time.Time `gorm:"autoCreateTime"`

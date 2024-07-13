@@ -3,11 +3,11 @@ package content
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type ContentService interface {
-	UploadContent(uploaderId *uint, caption *string, url *string) (*entity.Content, error)
-	UpdateContent(id *uint, caption *string) (*entity.Content, error)
+	UploadContent(uploaderId uint, caption string, url string) (*entity.Content, error)
+	UpdateContent(id uint, caption string) (*entity.Content, error)
 	GetAllContents() (*[]entity.Content, error)
-	GetOneContent(id *uint) (*entity.Content, error)
-	DeleteContent(id *uint) error
+	GetOneContent(id uint) (*entity.Content, error)
+	DeleteContent(id uint) error
 }
 
 type contentService struct {
@@ -20,7 +20,7 @@ func NewContentService(contentRepository ContentRepository) ContentService {
 	}
 }
 
-func (s *contentService) UploadContent(uploaderId *uint, caption *string, url *string) (*entity.Content, error) {
+func (s *contentService) UploadContent(uploaderId uint, caption string, url string) (*entity.Content, error) {
 
 	content, err := s.contentRepository.Create(uploaderId, caption, url)
 
@@ -31,7 +31,7 @@ func (s *contentService) UploadContent(uploaderId *uint, caption *string, url *s
 	return content, nil
 }
 
-func (s *contentService) UpdateContent(id *uint, caption *string) (*entity.Content, error) {
+func (s *contentService) UpdateContent(id uint, caption string) (*entity.Content, error) {
 
 	content, err := s.contentRepository.Update(id, caption)
 
@@ -53,7 +53,7 @@ func (s *contentService) GetAllContents() (*[]entity.Content, error) {
 	return contents, nil
 }
 
-func (s *contentService) GetOneContent(id *uint) (*entity.Content, error) {
+func (s *contentService) GetOneContent(id uint) (*entity.Content, error) {
 
 	content, err := s.contentRepository.FindOne(id)
 
@@ -64,7 +64,7 @@ func (s *contentService) GetOneContent(id *uint) (*entity.Content, error) {
 	return content, nil
 }
 
-func (s *contentService) DeleteContent(id *uint) error {
+func (s *contentService) DeleteContent(id uint) error {
 
 	err := s.contentRepository.DeleteOne(id)
 

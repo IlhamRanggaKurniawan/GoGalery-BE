@@ -7,11 +7,11 @@ import (
 )
 
 type UserRepository interface {
-	Create(username *string, email *string, password *string) (*entity.User, error)
-	FindAll(username *string) (*[]entity.User, error)
-	FindOne(username *string) (*entity.User, error)
+	Create(username string, email string, password string) (*entity.User, error)
+	FindAll(username string) (*[]entity.User, error)
+	FindOne(username string) (*entity.User, error)
 	Update(username *string, bio *string, profileUrl *string, password *string) (*entity.User, error)
-	DeleteOne(id *uint) error
+	DeleteOne(id uint) error
 }
 
 type userRepository struct {
@@ -22,11 +22,11 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) Create(username *string, email *string, password *string) (*entity.User, error) {
+func (r *userRepository) Create(username string, email string, password string) (*entity.User, error) {
 	user := entity.User{
-		Username: *username,
-		Email:    *email,
-		Password: *password,
+		Username: username,
+		Email:    email,
+		Password: password,
 	}
 
 	err := r.db.Create(&user).Error
@@ -38,18 +38,18 @@ func (r *userRepository) Create(username *string, email *string, password *strin
 	return &user, nil
 }
 
-func (r *userRepository) FindAll(username *string) (*[]entity.User, error) {
+func (r *userRepository) FindAll(username string) (*[]entity.User, error) {
 	var users []entity.User
 
-	err := r.db.Where("username LIKE ?", "%"+*username+"%").Find(&users).Error
+	err := r.db.Where("username LIKE ?", "%"+username+"%").Find(&users).Error
 
 	return &users, err
 }
 
-func (r *userRepository) FindOne(username *string) (*entity.User, error) {
+func (r *userRepository) FindOne(username string) (*entity.User, error) {
 	var user entity.User
 
-	err := r.db.Where("username = ?", *username).Take(&user).Error
+	err := r.db.Where("username = ?", username).Take(&user).Error
 
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (r *userRepository) FindOne(username *string) (*entity.User, error) {
 
 func (r *userRepository) Update(username *string, bio *string, profileUrl *string, password *string) (*entity.User, error) {
 
-	user, err := r.FindOne(username)
+	user, err := r.FindOne(*username)
 
 	if err != nil {
 		return nil, err
@@ -90,8 +90,8 @@ func (r *userRepository) Update(username *string, bio *string, profileUrl *strin
 	return user, nil
 }
 
-func (r *userRepository) DeleteOne(id *uint) error {
-	err := r.db.Delete(&entity.User{}, *id).Error
+func (r *userRepository) DeleteOne(id uint) error {
+	err := r.db.Delete(&entity.User{}, id).Error
 
 	if err != nil {
 		return err

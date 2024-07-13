@@ -5,11 +5,18 @@ import (
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/comment"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/content"
+	directmessage "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/directMessage"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/feedback"
+	groupchat "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/groupChat"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/like"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/message"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/save"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/user"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
+
 	userRepository := user.NewUserRepository(s.DB)
 	userService := user.NewUserService(userRepository)
 	userHandler := user.NewHandler(userService)
@@ -21,6 +28,30 @@ func (s *Server) RegisterRoutes() http.Handler {
 	commentRepository := comment.NewContentRepository(s.DB)
 	commentService := comment.NewContentService(commentRepository)
 	commentHandler := comment.NewHandler(commentService)
+
+	likeRepository := like.NewLikeRepository(s.DB)
+	likeService := like.NewLikeService(likeRepository)
+	likeHandler := like.NewHandler(likeService)
+
+	saveRepository := save.NewSaveRepository(s.DB)
+	saveService := save.NewSaveService(saveRepository)
+	saveHandler := save.NewHandler(saveService)
+
+	feedbackRepository := feedback.NewFeedbackRepository(s.DB)
+	feedbackService := feedback.NewFeedbackService(feedbackRepository)
+	feedbackHandler := feedback.NewHandler(feedbackService)
+
+	messageRepository := message.NewMessageRepository(s.DB)
+	messageService := message.NewMessageService(messageRepository)
+	messageHandler := message.NewHandler(messageService)
+
+	directMessageRepository := directmessage.NewDirectMessageRepository(s.DB)
+	directMessageService := directmessage.NewDirectMessageService(directMessageRepository)
+	directMessageHandler := directmessage.NewHandler(directMessageService)
+
+	groupChatRepository := groupchat.NewGroupChatRepository(s.DB)
+	groupChatService := groupchat.NewGroupChatService(groupChatRepository)
+	groupChatHandler := groupchat.NewHandler(groupChatService)
 
 	mux.HandleFunc("POST /user/register", userHandler.Register)
 	mux.HandleFunc("POST /user/login", userHandler.Login)
@@ -40,5 +71,34 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("PUT /comment/update", commentHandler.UpdateComment)
 	mux.HandleFunc("DELETE /comment/delete", commentHandler.DeleteComment)
 
+	mux.HandleFunc("POST /like/create", likeHandler.LikeContent)
+	mux.HandleFunc("GET /like/findall", likeHandler.GetAllLikes)
+	mux.HandleFunc("GET /like/findone", likeHandler.GetOneLike)
+	mux.HandleFunc("DELETE /like/delete", likeHandler.UnlikeContent)
+
+	mux.HandleFunc("POST /save/create", saveHandler.SaveContent)
+	mux.HandleFunc("GET /save/findall", saveHandler.GetAllSaves)
+	mux.HandleFunc("GET /save/findone", saveHandler.GetOneSave)
+	mux.HandleFunc("DELETE /save/delete", saveHandler.UnsaveContent)
+
+	mux.HandleFunc("POST /feedback/create", feedbackHandler.SendFeedback)
+	mux.HandleFunc("GET /feedback/findall", feedbackHandler.GetAllFeedbacks)
+
+	mux.HandleFunc("POST /message/create", messageHandler.SendMessage)
+	mux.HandleFunc("GET /message/findall", messageHandler.GetAllMessage)
+	mux.HandleFunc("PUT /message/update", messageHandler.UpdateMessage)
+	mux.HandleFunc("DELETE /message/delete", messageHandler.DeleteMessage)
+
+	mux.HandleFunc("POST /dm/create", directMessageHandler.CreateDirectMessage)
+	mux.HandleFunc("GET /dm/findall", directMessageHandler.GetAllDirectMessages)
+	mux.HandleFunc("GET /dm/findone", directMessageHandler.GetOneDirectMessage)
+	mux.HandleFunc("DELETE /dm/delete", directMessageHandler.DeleteDirectMessage)
+
+	mux.HandleFunc("POST /gc/create", groupChatHandler.CreateGroupChat)
+	mux.HandleFunc("GET /gc/findall", groupChatHandler.GetAllGroupChats)
+	mux.HandleFunc("GET /gc/findone", groupChatHandler.GetOneGroupChat)
+	mux.HandleFunc("PUT /gc/update", groupChatHandler.UpdateGroupChat)
+	mux.HandleFunc("DELETE /gc/delete", groupChatHandler.DeleteGroupChat)
+	
 	return mux
 }

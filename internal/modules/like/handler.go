@@ -1,27 +1,25 @@
-package comment
+package like
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
 type Handler struct {
-	commentService CommentService
+	likeContentService LikeContentService
 }
 
 type input struct {
-	ID        uint   `json:"id"`
-	ContentID uint   `json:"contentId"`
-	UserID    uint   `json:"userId"`
-	Message   string `json:"message"`
+	ID        uint `json:"id"`
+	UserID    uint `json:"userId"`
+	ContentID uint `json:"contentId"`
 }
 
-func NewHandler(commentService CommentService) Handler {
-	return Handler{commentService}
+func NewHandler(likeContentService LikeContentService) Handler {
+	return Handler{likeContentService}
 }
 
-func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LikeContent(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -31,19 +29,17 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(input)
-
-	content, _ := h.commentService.SendComment(input.UserID, input.ContentID, input.Message)
+	like, _ := h.likeContentService.LikeContent(input.UserID, input.ContentID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(like); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllLikes(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -53,17 +49,17 @@ func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.GetAllComments(input.ContentID)
+	likes, _ := h.likeContentService.GetAllLikes(input.ContentID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(likes); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetOneLike(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -73,17 +69,17 @@ func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.updateComment(input.ID, input.Message)
+	likes, _ := h.likeContentService.GetOneLike(input.UserID, input.ContentID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(likes); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UnlikeContent(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -93,7 +89,7 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.commentService.DeleteContent(input.ID)
+	err = h.likeContentService.UnlikeContent(input.ID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -101,7 +97,6 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
 	resp := struct {
 		Message string `json:"message"`
 	}{

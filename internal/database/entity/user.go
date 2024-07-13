@@ -10,22 +10,20 @@ type User struct {
 	Role                string `gorm:"default:member"`
 	ProfileUrl          *string
 	Bio                 *string
-	Contents            []Content        `gorm:"foreignKey:UploaderID"`
-	LikeContents        []LikeContent    `gorm:"foreignKey:UserID"`
-	SaveContents        []SaveContent    `gorm:"foreignKey:UserID"`
-	Comments            []Comment        `gorm:"foreignKey:UserID"`
-	Followers           []Follow         `gorm:"foreignKey:FollowingID"`
-	Following           []Follow         `gorm:"foreignKey:FollowerID"`
-	Messages            []Message        `gorm:"foreignKey:SenderID"`
-	DirectMessages      []DirectMessage  `gorm:"many2many:user_direct_messages;"`
-	GroupChats          []GroupChat      `gorm:"many2many:user_group_chats;"`
-	Notifications       []Notification   `gorm:"foreignKey:ReceiverID"`
-	NotificationTrigger []Notification   `gorm:"foreignKey:TriggerID"`
-	AIConversation      []AIConversation `gorm:"foreignKey:UserID"`
-	AIMessages          []AIMessage      `gorm:"foreignKey:SenderID"`
-	Feedback            []Feedback       `gorm:"foreignKey:UserID"`
+	Contents            []Content        `gorm:"foreignKey:UploaderID;constraint:OnDelete:CASCADE;"`
+	LikeContents        []LikeContent    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	SaveContents        []SaveContent    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	Comments            []Comment        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	Followers           []Follow         `gorm:"foreignKey:FollowingID;constraint:OnDelete:CASCADE;"`
+	Following           []Follow         `gorm:"foreignKey:FollowerID;constraint:OnDelete:CASCADE;"`
+	Messages            []Message        `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE;"`
+	DirectMessages      []DirectMessage  `gorm:"many2many:direct_message_participants;constraint:OnDelete:CASCADE;"`
+	GroupChats          []GroupChat      `gorm:"many2many:group_chat_members;constraint:OnDelete:CASCADE;"`
+	Notifications       []Notification   `gorm:"foreignKey:ReceiverID;constraint:OnDelete:CASCADE;"`
+	NotificationTrigger []Notification   `gorm:"foreignKey:TriggerID;constraint:OnDelete:CASCADE;"`
+	AIConversation      []AIConversation `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	AIMessages          []AIMessage      `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE;"`
+	Feedback            []Feedback       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	CreatedAt           time.Time        `gorm:"autoCreateTime"`
 	UpdatedAt           time.Time        `gorm:"autoUpdateTime"`
 }
-
-
