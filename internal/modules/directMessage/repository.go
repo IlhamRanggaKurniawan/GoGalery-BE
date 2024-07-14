@@ -21,17 +21,17 @@ func NewDirectMessageRepository(db *gorm.DB) DirectMessageRepository {
 }
 
 func (r *directMessageRepository) Create(participants []entity.User) (*entity.DirectMessage, error) {
-	message := entity.DirectMessage{
+	directMessage := entity.DirectMessage{
 		Participants: participants,
 	}
 
-	err := r.db.Create(&message).Error
+	err := r.db.Create(&directMessage).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &message, nil
+	return &directMessage, nil
 }
 
 func (r *directMessageRepository) FindAll(userId uint) (*[]entity.DirectMessage, error) {

@@ -1,26 +1,28 @@
-package comment
+package follow
 
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 )
 
 type Handler struct {
-	commentService CommentService
+	followService FollowService
 }
 
 type input struct {
-	ID        uint   `json:"id"`
-	ContentID uint   `json:"contentId"`
-	UserID    uint   `json:"userId"`
-	Message   string `json:"message"`
+	ID              uint   `json:"id"`
+	UserID          uint   `json:"userId"`
+	FollowerID      uint   `json:"followerId"`
+	FollowingID     uint   `json:"followingId"`
 }
 
-func NewHandler(commentService CommentService) Handler {
-	return Handler{commentService}
+func NewHandler(followService FollowService) Handler {
+	return Handler{followService}
 }
 
-func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -30,17 +32,17 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.SendComment(input.UserID, input.ContentID, input.Message)
+	follow, _ := h.followService.followUser(input.FollowerID, input.FollowingID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(follow); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllFollows(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -50,17 +52,25 @@ func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.GetAllComments(input.ContentID)
+	follower, following, _ := h.followService.GetAllFollows(input.UserID)
+
+	follow := struct{
+		Follower *[]entity.Follow `json:"follower"`
+		Following *[]entity.Follow `json:"following"`
+	}{
+		Follower: follower,
+		Following: following,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(follow); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CheckFollowing(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -70,17 +80,17 @@ func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.updateComment(input.ID, input.Message)
+	follow, _ := h.followService.CheckFollowing(input.FollowerID, input.FollowingID)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(follow); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -90,7 +100,7 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.commentService.DeleteContent(input.ID)
+	err = h.followService.UnfollowUser(input.ID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -98,7 +108,6 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
 	resp := struct {
 		Message string `json:"message"`
 	}{

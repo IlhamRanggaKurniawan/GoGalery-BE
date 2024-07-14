@@ -1,4 +1,4 @@
-package comment
+package aImessage
 
 import (
 	"encoding/json"
@@ -6,21 +6,21 @@ import (
 )
 
 type Handler struct {
-	commentService CommentService
+	aIMessageService AIMessageService
 }
 
 type input struct {
-	ID        uint   `json:"id"`
-	ContentID uint   `json:"contentId"`
-	UserID    uint   `json:"userId"`
-	Message   string `json:"message"`
+	ID             uint   `json:"id"`
+	SenderID       uint   `json:"senderId"`
+	ConversationId uint   `json:"conversationId"`
+	Message        string `json:"message"`
 }
 
-func NewHandler(commentService CommentService) Handler {
-	return Handler{commentService}
+func NewHandler(aIMessageService AIMessageService) Handler {
+	return Handler{aIMessageService}
 }
 
-func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -30,17 +30,17 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.SendComment(input.UserID, input.ContentID, input.Message)
+	message, _ := h.aIMessageService.SendMessage(input.SenderID, input.ConversationId, input.Message)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(message); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -50,17 +50,17 @@ func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.GetAllComments(input.ContentID)
+	messages, _ := h.aIMessageService.GetAllMessages(input.ConversationId)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(messages); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -70,17 +70,17 @@ func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.updateComment(input.ID, input.Message)
+	message, _ := h.aIMessageService.UpdateMessage(input.ID, input.Message)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
+	if err := json.NewEncoder(w).Encode(message); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -90,7 +90,7 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.commentService.DeleteContent(input.ID)
+	err = h.aIMessageService.DeleteMessage(input.ID)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -98,7 +98,6 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
 	resp := struct {
 		Message string `json:"message"`
 	}{

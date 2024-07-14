@@ -14,6 +14,7 @@ type Handler struct {
 type input struct {
 	ID         uint `json:"id"`
 	UserID     uint `json:"userId"`
+	Name       string `json:"name"`
 	Members    []entity.User
 	PictureUrl string `json:"pictureUrl"`
 }
@@ -32,7 +33,7 @@ func (h *Handler) CreateGroupChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feedback, _ := h.groupChatService.CreateGroupChat(input.Members)
+	feedback, _ := h.groupChatService.CreateGroupChat(input.Name, input.Members)
 
 	w.Header().Set("Content-Type", "application/json")
 

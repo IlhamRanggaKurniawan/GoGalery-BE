@@ -3,7 +3,7 @@ package groupchat
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type GroupChatService interface {
-	CreateGroupChat(members []entity.User) (*entity.GroupChat, error)
+	CreateGroupChat(name string, members []entity.User) (*entity.GroupChat, error)
 	GetAllGroupChats(userId uint) (*[]entity.GroupChat, error)
 	GetOneGroupChat(id uint) (*entity.GroupChat, error)
 	UpdateGroupChat(id uint, pictureUrl string) (*entity.GroupChat, error)
@@ -20,9 +20,9 @@ func NewGroupChatService(groupChatRepository GroupChatRepository) GroupChatServi
 	}
 }
 
-func (s *groupChatService) CreateGroupChat(members []entity.User) (*entity.GroupChat, error) {
+func (s *groupChatService) CreateGroupChat(name string,members []entity.User) (*entity.GroupChat, error) {
 
-	groupChat, err := s.groupChatRepository.Create(members)
+	groupChat, err := s.groupChatRepository.Create(name,members)
 
 	if err != nil {
 		return nil, err

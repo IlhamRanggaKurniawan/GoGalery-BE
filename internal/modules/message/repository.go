@@ -22,11 +22,21 @@ func NewMessageRepository(db *gorm.DB) MessageRepository {
 }
 
 func (r *messageRepository) Create(senderId uint, directMessageId uint, groupChatId uint, text string) (*entity.Message, error) {
-	message := entity.Message{
-		Message:         text,
-		SenderID:        senderId,
-		DirectMessageID: &directMessageId,
-		GroupChatID:     &groupChatId,
+	var message entity.Message
+	if directMessageId != 0 {
+		message = entity.Message{
+			Message:         text,
+			SenderID:        senderId,
+			DirectMessageID: &directMessageId,
+			GroupChatID:     nil,
+		}
+	} else {
+		message = entity.Message{
+			Message:         text,
+			SenderID:        senderId,
+			DirectMessageID: nil,
+			GroupChatID:     &groupChatId,
+		}
 	}
 
 	err := r.db.Create(&message).Error
@@ -85,4 +95,3 @@ func (r *messageRepository) DeleteOne(id uint) error {
 
 	return nil
 }
-

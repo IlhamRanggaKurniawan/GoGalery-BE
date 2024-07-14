@@ -3,13 +3,17 @@ package server
 import (
 	"net/http"
 
+	aIconversation "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/aIConversation"
+	aImessage "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/aIMessage"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/comment"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/content"
 	directmessage "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/directMessage"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/feedback"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/follow"
 	groupchat "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/groupChat"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/like"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/message"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/notification"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/save"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/user"
 )
@@ -52,6 +56,22 @@ func (s *Server) RegisterRoutes() http.Handler {
 	groupChatRepository := groupchat.NewGroupChatRepository(s.DB)
 	groupChatService := groupchat.NewGroupChatService(groupChatRepository)
 	groupChatHandler := groupchat.NewHandler(groupChatService)
+
+	aIConversationRepository := aIconversation.NewAIConversationRepository(s.DB)
+	aIConversationService := aIconversation.NewAIConversationService(aIConversationRepository)
+	aIConversationHandler := aIconversation.NewHandler(aIConversationService)
+
+	aiMessageRepository := aImessage.NewAIMessageRepository(s.DB)
+	aiMessageService := aImessage.NewAIMessageService(aiMessageRepository)
+	aiMessageHandler := aImessage.NewHandler(aiMessageService)
+
+	followRepository := follow.NewFollowRepository(s.DB)
+	followService := follow.NewFollowService(followRepository)
+	followHandler := follow.NewHandler(followService)
+
+	notificationRepository := notification.NewNotificationRepository(s.DB)
+	notificationService := notification.NewNotificationService(notificationRepository)
+	notificationHandler := notification.NewHandler(notificationService)
 
 	mux.HandleFunc("POST /user/register", userHandler.Register)
 	mux.HandleFunc("POST /user/login", userHandler.Login)
@@ -99,6 +119,25 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /gc/findone", groupChatHandler.GetOneGroupChat)
 	mux.HandleFunc("PUT /gc/update", groupChatHandler.UpdateGroupChat)
 	mux.HandleFunc("DELETE /gc/delete", groupChatHandler.DeleteGroupChat)
+
+	mux.HandleFunc("POST /aiconv/create", aIConversationHandler.CreateConversation)
+	mux.HandleFunc("GET /aiconv/findone", aIConversationHandler.GetConversation)
+	mux.HandleFunc("DELETE /aiconv/delete", aIConversationHandler.DeleteConversation)
+
+	mux.HandleFunc("POST /aimessage/create", aiMessageHandler.SendMessage)
+	mux.HandleFunc("GET /aimessage/findall", aiMessageHandler.GetAllMessages)
+	mux.HandleFunc("PUT /aimessage/update", aiMessageHandler.UpdateMessage)
+	mux.HandleFunc("DELETE /aimessage/delete", aiMessageHandler.DeleteMessage)
 	
+	mux.HandleFunc("POST /follow/create", followHandler.FollowUser)
+	mux.HandleFunc("GET /follow/findall", followHandler.GetAllFollows)
+	mux.HandleFunc("GET /follow/findone", followHandler.CheckFollowing)
+	mux.HandleFunc("DELETE /follow/delete", followHandler.UnfollowUser)
+
+	mux.HandleFunc("POST /notification/create", notificationHandler.CreateNotification)
+	mux.HandleFunc("GET /notification/findall", notificationHandler.GetAllNotifications)
+	mux.HandleFunc("PUT /notification/update", notificationHandler.UpdateNotifications)
+	mux.HandleFunc("DELETE /notification/delete", notificationHandler.DeleteNotifications)
+
 	return mux
 }
