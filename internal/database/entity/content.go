@@ -3,8 +3,8 @@ package entity
 import "time"
 
 type Content struct {
-	ID         uint `gorm:"primaryKey;autoIncrement"`
-	UploaderID uint
+	ID         uint64 `gorm:"primaryKey;autoIncrement"`
+	UploaderID uint64
 	Caption    string
 	URL        string        `gorm:"unique"`
 	Likes      []LikeContent `gorm:"foreignKey:ContentID;constraint:OnDelete:CASCADE;"`

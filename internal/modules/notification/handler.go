@@ -10,8 +10,8 @@ type Handler struct {
 }
 
 type input struct {
-	ReceiverID uint   `json:"receiverId"`
-	TriggerID  uint   `json:"triggerId"`
+	ReceiverID uint64   `json:"receiverId"`
+	TriggerID  uint64   `json:"triggerId"`
 	Content    string `json:"content"`
 }
 

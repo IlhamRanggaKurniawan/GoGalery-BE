@@ -3,10 +3,10 @@ package aImessage
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type AIMessageService interface {
-	SendMessage(senderId uint, conversationID uint, message string) (*entity.AIMessage, error)
-	GetAllMessages(conversationID uint) (*[]entity.AIMessage, error)
-	UpdateMessage(id uint, message string) (*entity.AIMessage, error)
-	DeleteMessage(id uint) error
+	SendMessage(senderId uint64, conversationID uint64, message string) (*entity.AIMessage, error)
+	GetAllMessages(conversationID uint64) (*[]entity.AIMessage, error)
+	UpdateMessage(id uint64, message string) (*entity.AIMessage, error)
+	DeleteMessage(id uint64) error
 }
 
 type aIMessageService struct {
@@ -19,7 +19,7 @@ func NewAIMessageService(aIMessageRepository AIMessageRepository) AIMessageServi
 	}
 }
 
-func (s *aIMessageService) SendMessage(senderId uint, conversationID uint, message string) (*entity.AIMessage, error) {
+func (s *aIMessageService) SendMessage(senderId uint64, conversationID uint64, message string) (*entity.AIMessage, error) {
 
 	aIMessage, err := s.aIMessageRepository.Create(senderId, conversationID, message, message)
 
@@ -30,7 +30,7 @@ func (s *aIMessageService) SendMessage(senderId uint, conversationID uint, messa
 	return aIMessage, nil
 }
 
-func (s *aIMessageService) GetAllMessages(conversationID uint) (*[]entity.AIMessage, error) {
+func (s *aIMessageService) GetAllMessages(conversationID uint64) (*[]entity.AIMessage, error) {
 
 	aIMessages, err := s.aIMessageRepository.FindAll(conversationID)
 
@@ -41,7 +41,7 @@ func (s *aIMessageService) GetAllMessages(conversationID uint) (*[]entity.AIMess
 	return aIMessages, nil
 }
 
-func (s *aIMessageService) UpdateMessage(id uint, message string) (*entity.AIMessage, error) {
+func (s *aIMessageService) UpdateMessage(id uint64, message string) (*entity.AIMessage, error) {
 
 	aIMessage, err := s.aIMessageRepository.Update(id, message)
 
@@ -52,7 +52,7 @@ func (s *aIMessageService) UpdateMessage(id uint, message string) (*entity.AIMes
 	return aIMessage, nil
 }
 
-func (s *aIMessageService) DeleteMessage(id uint) error {
+func (s *aIMessageService) DeleteMessage(id uint64) error {
 
 	err := s.aIMessageRepository.DeleteOne(id)
 

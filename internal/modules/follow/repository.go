@@ -6,10 +6,10 @@ import (
 )
 
 type FollowRepository interface {
-	Create(followerId uint, followingId uint) (*entity.Follow, error)
-	FindAll(userId uint) (*[]entity.Follow, *[]entity.Follow, error)
-	FindOne(followerId uint, followingId uint) (*entity.Follow, error)
-	DeleteOne(id uint) error
+	Create(followerId uint64, followingId uint64) (*entity.Follow, error)
+	FindAll(userId uint64) (*[]entity.Follow, *[]entity.Follow, error)
+	FindOne(followerId uint64, followingId uint64) (*entity.Follow, error)
+	DeleteOne(id uint64) error
 }
 
 type followRepository struct {
@@ -20,7 +20,7 @@ func NewFollowRepository(db *gorm.DB) FollowRepository {
 	return &followRepository{db: db}
 }
 
-func (r *followRepository) Create(followerId uint, followingId uint) (*entity.Follow, error) {
+func (r *followRepository) Create(followerId uint64, followingId uint64) (*entity.Follow, error) {
 	follow := entity.Follow{
 		FollowerID:  followerId,
 		FollowingID: followingId,
@@ -35,7 +35,7 @@ func (r *followRepository) Create(followerId uint, followingId uint) (*entity.Fo
 	return &follow, nil
 }
 
-func (r *followRepository) FindAll(userId uint) (*[]entity.Follow, *[]entity.Follow, error) {
+func (r *followRepository) FindAll(userId uint64) (*[]entity.Follow, *[]entity.Follow, error) {
 	var follower []entity.Follow
 	var following []entity.Follow
 
@@ -54,7 +54,7 @@ func (r *followRepository) FindAll(userId uint) (*[]entity.Follow, *[]entity.Fol
 	return &follower, &following, nil
 }
 
-func (r *followRepository) FindOne(followerId uint, followingId uint) (*entity.Follow, error) {
+func (r *followRepository) FindOne(followerId uint64, followingId uint64) (*entity.Follow, error) {
 	var follow entity.Follow
 
 	err := r.db.Where("follower_id = ? AND following_id = ?", followerId, followingId).Take(&follow).Error
@@ -66,7 +66,7 @@ func (r *followRepository) FindOne(followerId uint, followingId uint) (*entity.F
 	return &follow, nil
 }
 
-func (r *followRepository) DeleteOne(id uint) error {
+func (r *followRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.Follow{}, id).Error
 

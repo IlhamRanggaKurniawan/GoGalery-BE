@@ -6,10 +6,10 @@ import (
 )
 
 type SaveContentRepository interface {
-	Create(userId uint, contentId uint) (*entity.SaveContent, error)
-	FindAll(contentId uint) (*[]entity.SaveContent, error)
-	FindOne(userId uint, contentId uint) (*entity.SaveContent, error)
-	DeleteOne(id uint) error
+	Create(userId uint64, contentId uint64) (*entity.SaveContent, error)
+	FindAll(contentId uint64) (*[]entity.SaveContent, error)
+	FindOne(userId uint64, contentId uint64) (*entity.SaveContent, error)
+	DeleteOne(id uint64) error
 }
 
 type saveContentRepository struct {
@@ -20,7 +20,7 @@ func NewSaveRepository(db *gorm.DB) SaveContentRepository {
 	return &saveContentRepository{db: db}
 }
 
-func (r *saveContentRepository) Create(userId uint, contentId uint) (*entity.SaveContent, error) {
+func (r *saveContentRepository) Create(userId uint64, contentId uint64) (*entity.SaveContent, error) {
 	save := entity.SaveContent{
 		UserID:    userId,
 		ContentID: contentId,
@@ -35,7 +35,7 @@ func (r *saveContentRepository) Create(userId uint, contentId uint) (*entity.Sav
 	return &save, nil
 }
 
-func (r *saveContentRepository) FindAll(contentId uint) (*[]entity.SaveContent, error) {
+func (r *saveContentRepository) FindAll(contentId uint64) (*[]entity.SaveContent, error) {
 	var saves []entity.SaveContent
 
 	err := r.db.Where("content_id = ?", contentId).Find(&saves).Error
@@ -47,7 +47,7 @@ func (r *saveContentRepository) FindAll(contentId uint) (*[]entity.SaveContent, 
 	return &saves, nil
 }
 
-func (r *saveContentRepository) FindOne(userId uint, contentId uint) (*entity.SaveContent, error) {
+func (r *saveContentRepository) FindOne(userId uint64, contentId uint64) (*entity.SaveContent, error) {
 	var save entity.SaveContent
 
 	err := r.db.Where("user_id = ? AND content_id = ?", userId, contentId).Take(&save).Error
@@ -59,7 +59,7 @@ func (r *saveContentRepository) FindOne(userId uint, contentId uint) (*entity.Sa
 	return &save, nil
 }
 
-func (r *saveContentRepository) DeleteOne(id uint) error {
+func (r *saveContentRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.SaveContent{}, id).Error
 

@@ -3,10 +3,10 @@ package like
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type LikeContentService interface {
-	LikeContent(userId uint, contentId uint) (*entity.LikeContent, error)
-	GetAllLikes(contentId uint) (*[]entity.LikeContent, error)
-	GetOneLike(userId uint, contentId uint) (*entity.LikeContent, error)
-	UnlikeContent(id uint) error
+	LikeContent(userId uint64, contentId uint64) (*entity.LikeContent, error)
+	GetAllLikes(contentId uint64) (*[]entity.LikeContent, error)
+	GetOneLike(userId uint64, contentId uint64) (*entity.LikeContent, error)
+	UnlikeContent(id uint64) error
 }
 
 type likeContentService struct {
@@ -19,7 +19,7 @@ func NewLikeService(likeContentRepository LikeContentRepository) LikeContentServ
 	}
 }
 
-func (s *likeContentService) LikeContent(userId uint, contentId uint) (*entity.LikeContent, error) {
+func (s *likeContentService) LikeContent(userId uint64, contentId uint64) (*entity.LikeContent, error) {
 
 	like, err := s.likeContentRepository.Create(userId, contentId)
 
@@ -30,7 +30,7 @@ func (s *likeContentService) LikeContent(userId uint, contentId uint) (*entity.L
 	return like, nil
 }
 
-func (s *likeContentService) GetAllLikes(contentId uint) (*[]entity.LikeContent, error) {
+func (s *likeContentService) GetAllLikes(contentId uint64) (*[]entity.LikeContent, error) {
 
 	likes, err := s.likeContentRepository.FindAll(contentId)
 
@@ -41,7 +41,7 @@ func (s *likeContentService) GetAllLikes(contentId uint) (*[]entity.LikeContent,
 	return likes, nil
 }
 
-func (s *likeContentService) GetOneLike(userId uint, contentId uint) (*entity.LikeContent, error) {
+func (s *likeContentService) GetOneLike(userId uint64, contentId uint64) (*entity.LikeContent, error) {
 
 	like, err := s.likeContentRepository.FindOne(userId, contentId)
 
@@ -52,7 +52,7 @@ func (s *likeContentService) GetOneLike(userId uint, contentId uint) (*entity.Li
 	return like, nil
 }
 
-func (s *likeContentService) UnlikeContent(id uint) error {
+func (s *likeContentService) UnlikeContent(id uint64) error {
 
 	err := s.likeContentRepository.DeleteOne(id)
 

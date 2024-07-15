@@ -3,11 +3,11 @@ package entity
 import "time"
 
 type AIMessage struct {
-	ID             uint `gorm:"primaryKey;autoIncrement"`
+	ID             uint64 `gorm:"primaryKey;autoIncrement"`
 	Message        string
 	Response       *string
-	SenderID       uint
-	ConversationID uint
+	SenderID       uint64
+	ConversationID uint64
 	CreatedAt      time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time      `gorm:"autoUpdateTime"`
 }

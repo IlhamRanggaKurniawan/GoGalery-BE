@@ -6,9 +6,9 @@ import (
 )
 
 type AIConversationRepository interface {
-	Create(userId uint) (*entity.AIConversation, error)
-	FindOne(userId uint) (*entity.AIConversation, error)
-	DeleteOne(id uint) error
+	Create(userId uint64) (*entity.AIConversation, error)
+	FindOne(userId uint64) (*entity.AIConversation, error)
+	DeleteOne(id uint64) error
 }
 
 type aIConversationRepository struct {
@@ -19,7 +19,7 @@ func NewAIConversationRepository(db *gorm.DB) AIConversationRepository {
 	return &aIConversationRepository{db: db}
 }
 
-func (r *aIConversationRepository) Create(userId uint) (*entity.AIConversation, error) {
+func (r *aIConversationRepository) Create(userId uint64) (*entity.AIConversation, error) {
 	message := entity.AIConversation{
 		UserID: userId,
 	}
@@ -33,7 +33,7 @@ func (r *aIConversationRepository) Create(userId uint) (*entity.AIConversation, 
 	return &message, nil
 }
 
-func (r *aIConversationRepository) FindOne(userId uint) (*entity.AIConversation, error) {
+func (r *aIConversationRepository) FindOne(userId uint64) (*entity.AIConversation, error) {
 
 	var DirectMessage entity.AIConversation
 
@@ -46,7 +46,7 @@ func (r *aIConversationRepository) FindOne(userId uint) (*entity.AIConversation,
 	return &DirectMessage, nil
 }
 
-func (r *aIConversationRepository) DeleteOne(id uint) error {
+func (r *aIConversationRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.AIConversation{}, id).Error
 

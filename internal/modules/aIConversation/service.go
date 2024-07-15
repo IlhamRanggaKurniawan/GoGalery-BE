@@ -3,9 +3,9 @@ package aIconversation
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type AIConversationService interface {
-	CreateConversation(userId uint) (*entity.AIConversation, error)
-	GetConversation(userId uint) (*entity.AIConversation, error)
-	DeleteConversation(id uint) error
+	CreateConversation(userId uint64) (*entity.AIConversation, error)
+	GetConversation(userId uint64) (*entity.AIConversation, error)
+	DeleteConversation(id uint64) error
 }
 
 type aIConversationService struct {
@@ -18,7 +18,7 @@ func NewAIConversationService(aIConversationRepository AIConversationRepository)
 	}
 }
 
-func (s *aIConversationService) CreateConversation(userId uint) (*entity.AIConversation, error) {
+func (s *aIConversationService) CreateConversation(userId uint64) (*entity.AIConversation, error) {
 
 	directMessage, err := s.aIConversationRepository.Create(userId)
 
@@ -29,7 +29,7 @@ func (s *aIConversationService) CreateConversation(userId uint) (*entity.AIConve
 	return directMessage, nil
 }
 
-func (s *aIConversationService) GetConversation(userId uint) (*entity.AIConversation, error) {
+func (s *aIConversationService) GetConversation(userId uint64) (*entity.AIConversation, error) {
 
 	directMessage, err := s.aIConversationRepository.FindOne(userId)
 
@@ -40,7 +40,7 @@ func (s *aIConversationService) GetConversation(userId uint) (*entity.AIConversa
 	return directMessage, nil
 }
 
-func (s *aIConversationService) DeleteConversation(id uint) error{
+func (s *aIConversationService) DeleteConversation(id uint64) error{
 
 	err := s.aIConversationRepository.DeleteOne(id)
 

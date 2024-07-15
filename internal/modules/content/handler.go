@@ -3,6 +3,7 @@ package content
 import (
 	"encoding/json"
 	"net/http"
+
 )
 
 type Handler struct {
@@ -10,10 +11,9 @@ type Handler struct {
 }
 
 type input struct {
-	ID         uint   `json:"id"`
-	UploaderID uint   `json:"uploaderId"`
+	ID         uint64 `json:"id"`
+	UploaderID uint64 `json:"uploaderId"`
 	Caption    string `json:"caption"`
-	Url        string `json:"url"`
 }
 
 func NewHandler(contentService ContentService) Handler {
@@ -30,7 +30,9 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.contentService.UploadContent(input.UploaderID, input.Caption, input.Url)
+	// tes, _ := strconv.ParseUint(uploaderID, 10, 32)
+
+	content, _ := h.contentService.UploadContent(input.UploaderID, input.Caption, "tess")
 
 	w.Header().Set("Content-Type", "application/json")
 

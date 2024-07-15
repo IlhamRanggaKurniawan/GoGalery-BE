@@ -6,10 +6,10 @@ import (
 )
 
 type LikeContentRepository interface {
-	Create(userId uint, contentId uint) (*entity.LikeContent, error)
-	FindAll(contentId uint) (*[]entity.LikeContent, error)
-	FindOne(userId uint, contentId uint) (*entity.LikeContent, error)
-	DeleteOne(id uint) error
+	Create(userId uint64, contentId uint64) (*entity.LikeContent, error)
+	FindAll(contentId uint64) (*[]entity.LikeContent, error)
+	FindOne(userId uint64, contentId uint64) (*entity.LikeContent, error)
+	DeleteOne(id uint64) error
 }
 
 type likeContentRepository struct {
@@ -20,7 +20,7 @@ func NewLikeRepository(db *gorm.DB) LikeContentRepository {
 	return &likeContentRepository{db: db}
 }
 
-func (r *likeContentRepository) Create(userId uint, contentId uint) (*entity.LikeContent, error) {
+func (r *likeContentRepository) Create(userId uint64, contentId uint64) (*entity.LikeContent, error) {
 	like := entity.LikeContent{
 		UserID:    userId,
 		ContentID: contentId,
@@ -35,7 +35,7 @@ func (r *likeContentRepository) Create(userId uint, contentId uint) (*entity.Lik
 	return &like, nil
 }
 
-func (r *likeContentRepository) FindAll(contentId uint) (*[]entity.LikeContent, error) {
+func (r *likeContentRepository) FindAll(contentId uint64) (*[]entity.LikeContent, error) {
 	var likes []entity.LikeContent
 
 	err := r.db.Where("content_id = ?", contentId).Find(&likes).Error
@@ -47,7 +47,7 @@ func (r *likeContentRepository) FindAll(contentId uint) (*[]entity.LikeContent, 
 	return &likes, nil
 }
 
-func (r *likeContentRepository) FindOne(userId uint, contentId uint) (*entity.LikeContent, error) {
+func (r *likeContentRepository) FindOne(userId uint64, contentId uint64) (*entity.LikeContent, error) {
 	var like entity.LikeContent
 
 	err := r.db.Where("user_id = ? AND content_id = ?", userId, contentId).Take(&like).Error
@@ -59,7 +59,7 @@ func (r *likeContentRepository) FindOne(userId uint, contentId uint) (*entity.Li
 	return &like, nil
 }
 
-func (r *likeContentRepository) DeleteOne(id uint) error {
+func (r *likeContentRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.LikeContent{}, id).Error
 

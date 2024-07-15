@@ -3,10 +3,10 @@ package follow
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type FollowService interface {
-	followUser(followerId uint, followingId uint) (*entity.Follow, error)
-	GetAllFollows(userId uint) (*[]entity.Follow, *[]entity.Follow, error)
-	CheckFollowing(followerId uint, followingId uint) (*entity.Follow, error)
-	UnfollowUser(id uint) error
+	followUser(followerId uint64, followingId uint64) (*entity.Follow, error)
+	GetAllFollows(userId uint64) (*[]entity.Follow, *[]entity.Follow, error)
+	CheckFollowing(followerId uint64, followingId uint64) (*entity.Follow, error)
+	UnfollowUser(id uint64) error
 }
 
 type followService struct {
@@ -19,7 +19,7 @@ func NewFollowService(followRepository FollowRepository) FollowService {
 	}
 }
 
-func (s *followService) followUser(followerId uint, followingId uint) (*entity.Follow, error) {
+func (s *followService) followUser(followerId uint64, followingId uint64) (*entity.Follow, error) {
 
 	follow, err := s.followRepository.Create(followerId, followingId)
 
@@ -30,7 +30,7 @@ func (s *followService) followUser(followerId uint, followingId uint) (*entity.F
 	return follow, nil
 }
 
-func (s *followService) GetAllFollows(userId uint) (*[]entity.Follow, *[]entity.Follow, error) {
+func (s *followService) GetAllFollows(userId uint64) (*[]entity.Follow, *[]entity.Follow, error) {
 
 	follower, following, err := s.followRepository.FindAll(userId)
 
@@ -41,7 +41,7 @@ func (s *followService) GetAllFollows(userId uint) (*[]entity.Follow, *[]entity.
 	return follower, following, nil
 }
 
-func (s *followService) CheckFollowing(followerId uint, followingId uint) (*entity.Follow, error) {
+func (s *followService) CheckFollowing(followerId uint64, followingId uint64) (*entity.Follow, error) {
 
 	follow, err := s.followRepository.FindOne(followerId, followingId)
 
@@ -52,7 +52,7 @@ func (s *followService) CheckFollowing(followerId uint, followingId uint) (*enti
 	return follow, nil
 }
 
-func (s *followService) UnfollowUser(id uint) error {
+func (s *followService) UnfollowUser(id uint64) error {
 
 	err := s.followRepository.DeleteOne(id)
 

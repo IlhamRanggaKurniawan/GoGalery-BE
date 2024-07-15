@@ -10,11 +10,11 @@ type Handler struct {
 }
 
 type input struct {
-	ID              uint   `json:"id"`
-	SenderID        uint   `json:"senderId"`
+	ID              uint64   `json:"id"`
+	SenderID        uint64   `json:"senderId"`
 	Text            string `json:"text"`
-	DirectMessageID uint   `json:"directMessageId"`
-	GroupChatID     uint   `json:"groupChatId"`
+	DirectMessageID uint64   `json:"directMessageId"`
+	GroupChatID     uint64   `json:"groupChatId"`
 }
 
 func NewHandler(messageService MessageService) Handler {

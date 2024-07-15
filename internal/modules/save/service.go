@@ -3,10 +3,10 @@ package save
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type SaveContentService interface {
-	SaveContent(userId uint, contentId uint) (*entity.SaveContent, error)
-	GetAllSaves(contentId uint) (*[]entity.SaveContent, error)
-	GetOneSave(userId uint, contentId uint) (*entity.SaveContent, error)
-	UnsaveContent(id uint) error
+	SaveContent(userId uint64, contentId uint64) (*entity.SaveContent, error)
+	GetAllSaves(contentId uint64) (*[]entity.SaveContent, error)
+	GetOneSave(userId uint64, contentId uint64) (*entity.SaveContent, error)
+	UnsaveContent(id uint64) error
 }
 
 type saveContentService struct {
@@ -19,7 +19,7 @@ func NewSaveService(saveContentRepository SaveContentRepository) SaveContentServ
 	}
 }
 
-func (s *saveContentService) SaveContent(userId uint, contentId uint) (*entity.SaveContent, error) {
+func (s *saveContentService) SaveContent(userId uint64, contentId uint64) (*entity.SaveContent, error) {
 
 	save, err := s.saveContentRepository.Create(userId, contentId)
 
@@ -30,7 +30,7 @@ func (s *saveContentService) SaveContent(userId uint, contentId uint) (*entity.S
 	return save, nil
 }
 
-func (s *saveContentService) GetAllSaves(contentId uint) (*[]entity.SaveContent, error) {
+func (s *saveContentService) GetAllSaves(contentId uint64) (*[]entity.SaveContent, error) {
 
 	saves, err := s.saveContentRepository.FindAll(contentId)
 
@@ -41,7 +41,7 @@ func (s *saveContentService) GetAllSaves(contentId uint) (*[]entity.SaveContent,
 	return saves, nil
 }
 
-func (s *saveContentService) GetOneSave(userId uint, contentId uint) (*entity.SaveContent, error) {
+func (s *saveContentService) GetOneSave(userId uint64, contentId uint64) (*entity.SaveContent, error) {
 
 	save, err := s.saveContentRepository.FindOne(userId, contentId)
 
@@ -52,7 +52,7 @@ func (s *saveContentService) GetOneSave(userId uint, contentId uint) (*entity.Sa
 	return save, nil
 }
 
-func (s *saveContentService) UnsaveContent(id uint) error {
+func (s *saveContentService) UnsaveContent(id uint64) error {
 
 	err := s.saveContentRepository.DeleteOne(id)
 

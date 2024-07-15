@@ -3,10 +3,10 @@ package message
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type MessageService interface {
-	SendMessage(senderId uint, directMessageId uint, groupChatId uint, text string) (*entity.Message, error)
-	GetAllMessages(directMessageId uint, groupChatId uint) (*[]entity.Message, error)
-	UpdateMessage(id uint, text string) (*entity.Message, error)
-	DeleteMessage(id uint) error
+	SendMessage(senderId uint64, directMessageId uint64, groupChatId uint64, text string) (*entity.Message, error)
+	GetAllMessages(directMessageId uint64, groupChatId uint64) (*[]entity.Message, error)
+	UpdateMessage(id uint64, text string) (*entity.Message, error)
+	DeleteMessage(id uint64) error
 }
 
 type messageService struct {
@@ -19,7 +19,7 @@ func NewMessageService(messageRepository MessageRepository) MessageService {
 	}
 }
 
-func (s *messageService) SendMessage(senderId uint, directMessageId uint, groupChatId uint, text string) (*entity.Message, error) {
+func (s *messageService) SendMessage(senderId uint64, directMessageId uint64, groupChatId uint64, text string) (*entity.Message, error) {
 
 	message, err := s.messageRepository.Create(senderId, directMessageId, groupChatId, text)
 
@@ -30,7 +30,7 @@ func (s *messageService) SendMessage(senderId uint, directMessageId uint, groupC
 	return message, nil
 }
 
-func (s *messageService) GetAllMessages(directMessageId uint, groupChatId uint) (*[]entity.Message, error) {
+func (s *messageService) GetAllMessages(directMessageId uint64, groupChatId uint64) (*[]entity.Message, error) {
 
 	messages, err := s.messageRepository.FindAll(directMessageId, groupChatId)
 
@@ -41,7 +41,7 @@ func (s *messageService) GetAllMessages(directMessageId uint, groupChatId uint) 
 	return messages, nil
 }
 
-func (s *messageService) UpdateMessage(id uint, text string) (*entity.Message, error) {
+func (s *messageService) UpdateMessage(id uint64, text string) (*entity.Message, error) {
 
 	message, err := s.messageRepository.Update(id, text)
 
@@ -52,7 +52,7 @@ func (s *messageService) UpdateMessage(id uint, text string) (*entity.Message, e
 	return message, nil
 }
 
-func (s *messageService) DeleteMessage(id uint) error {
+func (s *messageService) DeleteMessage(id uint64) error {
 
 	err := s.messageRepository.DeleteOne(id)
 

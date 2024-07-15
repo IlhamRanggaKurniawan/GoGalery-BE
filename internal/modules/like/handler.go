@@ -10,9 +10,9 @@ type Handler struct {
 }
 
 type input struct {
-	ID        uint `json:"id"`
-	UserID    uint `json:"userId"`
-	ContentID uint `json:"contentId"`
+	ID        uint64 `json:"id"`
+	UserID    uint64 `json:"userId"`
+	ContentID uint64 `json:"contentId"`
 }
 
 func NewHandler(likeContentService LikeContentService) Handler {

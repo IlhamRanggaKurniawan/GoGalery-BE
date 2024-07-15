@@ -11,7 +11,7 @@ type UserRepository interface {
 	FindAll(username string) (*[]entity.User, error)
 	FindOne(username string) (*entity.User, error)
 	Update(username *string, bio *string, profileUrl *string, password *string) (*entity.User, error)
-	DeleteOne(id uint) error
+	DeleteOne(id uint64) error
 }
 
 type userRepository struct {
@@ -90,7 +90,7 @@ func (r *userRepository) Update(username *string, bio *string, profileUrl *strin
 	return user, nil
 }
 
-func (r *userRepository) DeleteOne(id uint) error {
+func (r *userRepository) DeleteOne(id uint64) error {
 	err := r.db.Delete(&entity.User{}, id).Error
 
 	if err != nil {

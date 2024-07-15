@@ -4,10 +4,10 @@ import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity
 
 type GroupChatService interface {
 	CreateGroupChat(name string, members []entity.User) (*entity.GroupChat, error)
-	GetAllGroupChats(userId uint) (*[]entity.GroupChat, error)
-	GetOneGroupChat(id uint) (*entity.GroupChat, error)
-	UpdateGroupChat(id uint, pictureUrl string) (*entity.GroupChat, error)
-	DeleteGroupChat(id uint) error
+	GetAllGroupChats(userId uint64) (*[]entity.GroupChat, error)
+	GetOneGroupChat(id uint64) (*entity.GroupChat, error)
+	UpdateGroupChat(id uint64, pictureUrl string) (*entity.GroupChat, error)
+	DeleteGroupChat(id uint64) error
 }
 
 type groupChatService struct {
@@ -31,7 +31,7 @@ func (s *groupChatService) CreateGroupChat(name string,members []entity.User) (*
 	return groupChat, nil
 }
 
-func (s *groupChatService) GetAllGroupChats(userId uint) (*[]entity.GroupChat, error) {
+func (s *groupChatService) GetAllGroupChats(userId uint64) (*[]entity.GroupChat, error) {
 
 	directMessages, err := s.groupChatRepository.FindAll(userId)
 
@@ -42,7 +42,7 @@ func (s *groupChatService) GetAllGroupChats(userId uint) (*[]entity.GroupChat, e
 	return directMessages, nil
 }
 
-func (s *groupChatService) GetOneGroupChat(id uint) (*entity.GroupChat, error) {
+func (s *groupChatService) GetOneGroupChat(id uint64) (*entity.GroupChat, error) {
 
 	directMessage, err := s.groupChatRepository.FindOne(id)
 
@@ -53,7 +53,7 @@ func (s *groupChatService) GetOneGroupChat(id uint) (*entity.GroupChat, error) {
 	return directMessage, nil
 }
 
-func (s *groupChatService) UpdateGroupChat(id uint, pictureUrl string) (*entity.GroupChat, error) {
+func (s *groupChatService) UpdateGroupChat(id uint64, pictureUrl string) (*entity.GroupChat, error) {
 
 	directMessage, err := s.groupChatRepository.Update(id, pictureUrl)
 
@@ -64,7 +64,7 @@ func (s *groupChatService) UpdateGroupChat(id uint, pictureUrl string) (*entity.
 	return directMessage, nil
 }
 
-func (s *groupChatService) DeleteGroupChat(id uint) error {
+func (s *groupChatService) DeleteGroupChat(id uint64) error {
 
 	err := s.groupChatRepository.DeleteOne(id)
 

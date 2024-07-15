@@ -6,11 +6,11 @@ import (
 )
 
 type ContentRepository interface {
-	Create(uploaderId uint, caption string, url string) (*entity.Content, error)
+	Create(uploaderId uint64, caption string, url string) (*entity.Content, error)
 	FindAll() (*[]entity.Content, error)
-	FindOne(id uint) (*entity.Content, error)
-	Update(id uint, caption string) (*entity.Content, error)
-	DeleteOne(id uint) error
+	FindOne(id uint64) (*entity.Content, error)
+	Update(id uint64, caption string) (*entity.Content, error)
+	DeleteOne(id uint64) error
 }
 
 type contentRepository struct {
@@ -21,7 +21,7 @@ func NewContentRepository(db *gorm.DB) ContentRepository {
 	return &contentRepository{db: db}
 }
 
-func (r *contentRepository) Create(uploaderId uint, caption string, url string) (*entity.Content, error) {
+func (r *contentRepository) Create(uploaderId uint64, caption string, url string) (*entity.Content, error) {
 	content := entity.Content{
 		UploaderID: uploaderId,
 		Caption:    caption,
@@ -49,7 +49,7 @@ func (r *contentRepository) FindAll() (*[]entity.Content, error) {
 	return &contents, nil
 }
 
-func (r *contentRepository) FindOne(id uint) (*entity.Content, error) {
+func (r *contentRepository) FindOne(id uint64) (*entity.Content, error) {
 	var content entity.Content
 
 	err := r.db.Preload("Comments").Where("id = ?", id).Take(&content).Error
@@ -61,7 +61,7 @@ func (r *contentRepository) FindOne(id uint) (*entity.Content, error) {
 	return &content, nil
 }
 
-func (r *contentRepository) Update(id uint, caption string) (*entity.Content, error) {
+func (r *contentRepository) Update(id uint64, caption string) (*entity.Content, error) {
 
 	content, err := r.FindOne(id)
 
@@ -75,7 +75,7 @@ func (r *contentRepository) Update(id uint, caption string) (*entity.Content, er
 	return content, nil
 }
 
-func (r *contentRepository) DeleteOne(id uint) error {
+func (r *contentRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.Content{}, id).Error
 

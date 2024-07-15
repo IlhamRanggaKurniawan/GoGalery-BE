@@ -7,9 +7,9 @@ import (
 
 type DirectMessageRepository interface {
 	Create(participants []entity.User) (*entity.DirectMessage, error)
-	FindAll(userId uint) (*[]entity.DirectMessage, error)
-	FindOne(id uint) (*entity.DirectMessage, error)
-	DeleteOne(id uint) error
+	FindAll(userId uint64) (*[]entity.DirectMessage, error)
+	FindOne(id uint64) (*entity.DirectMessage, error)
+	DeleteOne(id uint64) error
 }
 
 type directMessageRepository struct {
@@ -34,7 +34,7 @@ func (r *directMessageRepository) Create(participants []entity.User) (*entity.Di
 	return &directMessage, nil
 }
 
-func (r *directMessageRepository) FindAll(userId uint) (*[]entity.DirectMessage, error) {
+func (r *directMessageRepository) FindAll(userId uint64) (*[]entity.DirectMessage, error) {
 
 	var DirectMessage []entity.DirectMessage
 
@@ -49,7 +49,7 @@ func (r *directMessageRepository) FindAll(userId uint) (*[]entity.DirectMessage,
 	return &DirectMessage, nil
 }
 
-func (r *directMessageRepository) FindOne(id uint) (*entity.DirectMessage, error) {
+func (r *directMessageRepository) FindOne(id uint64) (*entity.DirectMessage, error) {
 
 	var DirectMessage entity.DirectMessage
 
@@ -62,7 +62,7 @@ func (r *directMessageRepository) FindOne(id uint) (*entity.DirectMessage, error
 	return &DirectMessage, nil
 }
 
-func (r *directMessageRepository) DeleteOne(id uint) error {
+func (r *directMessageRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.DirectMessage{}, id).Error
 

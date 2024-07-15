@@ -3,10 +3,10 @@ package notification
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type NotificationService interface {
-	CreateNotification(receiverId uint, triggerId uint, content string) (*entity.Notification, error)
-	GetAllNotifications(receiverId uint) (*[]entity.Notification, error)
-	UpdateNotifications(receiverId uint) (*[]entity.Notification, error)
-	DeleteNotifications(receiverId uint) error
+	CreateNotification(receiverId uint64, triggerId uint64, content string) (*entity.Notification, error)
+	GetAllNotifications(receiverId uint64) (*[]entity.Notification, error)
+	UpdateNotifications(receiverId uint64) (*[]entity.Notification, error)
+	DeleteNotifications(receiverId uint64) error
 }
 
 type notificationService struct {
@@ -19,7 +19,7 @@ func NewNotificationService(notificationRepository NotificationRepository) Notif
 	}
 }
 
-func (s *notificationService) CreateNotification(receiverId uint, triggerId uint, content string) (*entity.Notification, error){
+func (s *notificationService) CreateNotification(receiverId uint64, triggerId uint64, content string) (*entity.Notification, error){
 
 	notification, err := s.notificationRepository.Create(receiverId, triggerId, content)
 
@@ -30,7 +30,7 @@ func (s *notificationService) CreateNotification(receiverId uint, triggerId uint
 	return notification, nil
 }
 
-func (s *notificationService) GetAllNotifications(receiverId uint) (*[]entity.Notification, error) {
+func (s *notificationService) GetAllNotifications(receiverId uint64) (*[]entity.Notification, error) {
 
 	notifications, err := s.notificationRepository.FindAll(receiverId)
 
@@ -41,7 +41,7 @@ func (s *notificationService) GetAllNotifications(receiverId uint) (*[]entity.No
 	return notifications, nil
 }
 
-func (s *notificationService) UpdateNotifications(receiverId uint) (*[]entity.Notification, error) {
+func (s *notificationService) UpdateNotifications(receiverId uint64) (*[]entity.Notification, error) {
 
 	message, err := s.notificationRepository.Update(receiverId)
 
@@ -52,7 +52,7 @@ func (s *notificationService) UpdateNotifications(receiverId uint) (*[]entity.No
 	return message, nil
 }
 
-func (s *notificationService) DeleteNotifications(receiverId uint) error {
+func (s *notificationService) DeleteNotifications(receiverId uint64) error {
 
 	err := s.notificationRepository.DeleteAll(receiverId)
 

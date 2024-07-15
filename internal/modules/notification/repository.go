@@ -7,10 +7,10 @@ import (
 )
 
 type NotificationRepository interface {
-	Create(receiverId uint, triggerId uint, content string) (*entity.Notification, error)
-	FindAll(receiverId uint) (*[]entity.Notification, error)
-	Update(receiverId uint) (*[]entity.Notification, error)
-	DeleteAll(receiverId uint) error
+	Create(receiverId uint64, triggerId uint64, content string) (*entity.Notification, error)
+	FindAll(receiverId uint64) (*[]entity.Notification, error)
+	Update(receiverId uint64) (*[]entity.Notification, error)
+	DeleteAll(receiverId uint64) error
 }
 
 type notificationRepository struct {
@@ -21,7 +21,7 @@ func NewNotificationRepository(db *gorm.DB) NotificationRepository {
 	return &notificationRepository{db: db}
 }
 
-func (r *notificationRepository) Create(receiverId uint, triggerId uint, content string) (*entity.Notification, error) {
+func (r *notificationRepository) Create(receiverId uint64, triggerId uint64, content string) (*entity.Notification, error) {
 	notification := entity.Notification{
 		Content:    content,
 		ReceiverID: receiverId,
@@ -37,7 +37,7 @@ func (r *notificationRepository) Create(receiverId uint, triggerId uint, content
 	return &notification, nil
 }
 
-func (r *notificationRepository) FindAll(receiverId uint) (*[]entity.Notification, error) {
+func (r *notificationRepository) FindAll(receiverId uint64) (*[]entity.Notification, error) {
 	var notifications []entity.Notification
 	err := r.db.Where("receiver_id = ?", receiverId).Find(&notifications).Error
 
@@ -48,7 +48,7 @@ func (r *notificationRepository) FindAll(receiverId uint) (*[]entity.Notificatio
 	return &notifications, nil
 }
 
-func (r *notificationRepository) Update(receiverId uint) (*[]entity.Notification, error) {
+func (r *notificationRepository) Update(receiverId uint64) (*[]entity.Notification, error) {
 	var notifications []entity.Notification
 
 	err := r.db.Where("receiver_id = ? AND is_checked = ?", receiverId, false).Find(&notifications).Error
@@ -66,7 +66,7 @@ func (r *notificationRepository) Update(receiverId uint) (*[]entity.Notification
 	return &notifications, nil
 }
 
-func (r *notificationRepository) DeleteAll(receiverId uint) error {
+func (r *notificationRepository) DeleteAll(receiverId uint64) error {
 
 	err := r.db.Where("receiver_id = ?", receiverId).Delete(&entity.Notification{}).Error
 

@@ -12,8 +12,8 @@ type Handler struct {
 }
 
 type input struct {
-	ID           uint `json:"id"`
-	UserID       uint `json:"userId"`
+	ID           uint64 `json:"id"`
+	UserID       uint64 `json:"userId"`
 	Participants []entity.User
 }
 

@@ -9,10 +9,10 @@ import (
 
 type GroupChatRepository interface {
 	Create(name string, members []entity.User) (*entity.GroupChat, error)
-	FindAll(userId uint) (*[]entity.GroupChat, error)
-	FindOne(id uint) (*entity.GroupChat, error)
-	Update(id uint, pictureUrl string) (*entity.GroupChat, error)
-	DeleteOne(id uint) error
+	FindAll(userId uint64) (*[]entity.GroupChat, error)
+	FindOne(id uint64) (*entity.GroupChat, error)
+	Update(id uint64, pictureUrl string) (*entity.GroupChat, error)
+	DeleteOne(id uint64) error
 }
 
 type groupChatRepository struct {
@@ -38,7 +38,7 @@ func (r *groupChatRepository) Create(name string, participants []entity.User) (*
 	return &groupChat, nil
 }
 
-func (r *groupChatRepository) FindAll(userId uint) (*[]entity.GroupChat, error) {
+func (r *groupChatRepository) FindAll(userId uint64) (*[]entity.GroupChat, error) {
 
 	var groupChats []entity.GroupChat
 
@@ -56,7 +56,7 @@ func (r *groupChatRepository) FindAll(userId uint) (*[]entity.GroupChat, error) 
 	return &groupChats, nil
 }
 
-func (r *groupChatRepository) FindOne(id uint) (*entity.GroupChat, error) {
+func (r *groupChatRepository) FindOne(id uint64) (*entity.GroupChat, error) {
 
 	var groupChat entity.GroupChat
 
@@ -71,7 +71,7 @@ func (r *groupChatRepository) FindOne(id uint) (*entity.GroupChat, error) {
 	return &groupChat, nil
 }
 
-func (r *groupChatRepository) Update(id uint, pictureUrl string) (*entity.GroupChat, error) {
+func (r *groupChatRepository) Update(id uint64, pictureUrl string) (*entity.GroupChat, error) {
 
 	groupChat, err := r.FindOne(id)
 
@@ -85,7 +85,7 @@ func (r *groupChatRepository) Update(id uint, pictureUrl string) (*entity.GroupC
 	return groupChat, nil
 }
 
-func (r *groupChatRepository) DeleteOne(id uint) error {
+func (r *groupChatRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.GroupChat{}, id).Error
 

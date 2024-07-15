@@ -10,7 +10,7 @@ type Handler struct {
 }
 
 type input struct {
-	UserID  uint   `json:"userId"`
+	UserID  uint64   `json:"userId"`
 	Message string `json:"message"`
 }
 

@@ -3,7 +3,7 @@ package feedback
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type FeedbackService interface {
-	SendFeedback(userId uint, message string) (*entity.Feedback, error)
+	SendFeedback(userId uint64, message string) (*entity.Feedback, error)
 	GetAllFeedbacks() (*[]entity.Feedback, error)
 }
 
@@ -17,7 +17,7 @@ func NewFeedbackService(feedbackRepository FeedbackRepository) FeedbackService {
 	}
 }
 
-func (s *feedbackService) SendFeedback(userId uint, message string) (*entity.Feedback, error) {
+func (s *feedbackService) SendFeedback(userId uint64, message string) (*entity.Feedback, error) {
 
 	feedback, err := s.feedbackRepository.Create(userId, message)
 

@@ -12,10 +12,10 @@ type Handler struct {
 }
 
 type input struct {
-	ID              uint   `json:"id"`
-	UserID          uint   `json:"userId"`
-	FollowerID      uint   `json:"followerId"`
-	FollowingID     uint   `json:"followingId"`
+	ID              uint64   `json:"id"`
+	UserID          uint64   `json:"userId"`
+	FollowerID      uint64   `json:"followerId"`
+	FollowingID     uint64   `json:"followingId"`
 }
 
 func NewHandler(followService FollowService) Handler {

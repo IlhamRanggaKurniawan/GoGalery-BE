@@ -4,9 +4,9 @@ import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity
 
 type DirectMessageService interface {
 	CreateDirectMessage(participants []entity.User) (*entity.DirectMessage, error)
-	GetAllDirectMessages(userId uint) (*[]entity.DirectMessage, error)
-	GetOneDirectMessage(id uint) (*entity.DirectMessage, error)
-	DeleteDirectMessage(id uint) error
+	GetAllDirectMessages(userId uint64) (*[]entity.DirectMessage, error)
+	GetOneDirectMessage(id uint64) (*entity.DirectMessage, error)
+	DeleteDirectMessage(id uint64) error
 }
 
 type directMessageService struct {
@@ -30,7 +30,7 @@ func (s *directMessageService) CreateDirectMessage(participants []entity.User) (
 	return directMessage, nil
 }
 
-func (s *directMessageService) GetAllDirectMessages(userId uint) (*[]entity.DirectMessage, error) {
+func (s *directMessageService) GetAllDirectMessages(userId uint64) (*[]entity.DirectMessage, error) {
 
 	directMessages, err := s.directMessageRepository.FindAll(userId)
 
@@ -41,7 +41,7 @@ func (s *directMessageService) GetAllDirectMessages(userId uint) (*[]entity.Dire
 	return directMessages, nil
 }
 
-func (s *directMessageService) GetOneDirectMessage(id uint) (*entity.DirectMessage, error) {
+func (s *directMessageService) GetOneDirectMessage(id uint64) (*entity.DirectMessage, error) {
 
 	directMessage, err := s.directMessageRepository.FindOne(id)
 
@@ -52,7 +52,7 @@ func (s *directMessageService) GetOneDirectMessage(id uint) (*entity.DirectMessa
 	return directMessage, nil
 }
 
-func (s *directMessageService) DeleteDirectMessage(id uint) error {
+func (s *directMessageService) DeleteDirectMessage(id uint64) error {
 
 	err := s.directMessageRepository.DeleteOne(id)
 

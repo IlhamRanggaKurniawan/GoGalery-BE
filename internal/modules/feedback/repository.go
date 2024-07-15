@@ -6,7 +6,7 @@ import (
 )
 
 type FeedbackRepository interface {
-	Create(userId uint, message string) (*entity.Feedback, error)
+	Create(userId uint64, message string) (*entity.Feedback, error)
 	FindAll() (*[]entity.Feedback, error)
 }
 
@@ -18,7 +18,7 @@ func NewFeedbackRepository(db *gorm.DB) FeedbackRepository {
 	return &feedbackRepository{db: db}
 }
 
-func (r *feedbackRepository) Create(userId uint, message string) (*entity.Feedback, error) {
+func (r *feedbackRepository) Create(userId uint64, message string) (*entity.Feedback, error) {
 	feedback := entity.Feedback{
 		UserID:  userId,
 		Message: message,
