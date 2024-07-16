@@ -27,12 +27,12 @@ func (r *commentRepository) Create(userId uint64, contentId uint64, text string)
 		ContentID: contentId,
 		Comment:   text,
 	}
-	err := r.db.Create(&comment).Error
+	err := r.db.Preload("Content").Create(&comment).Error
 
 	if err != nil {
 		return nil, err
 	}
-
+	
 	return &comment, nil
 }
 
@@ -76,7 +76,7 @@ func (r *commentRepository) Update(id uint64, text string) (*entity.Comment, err
 func (r *commentRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.Comment{}, id).Error
-
+	
 	if err != nil {
 		return err
 	}

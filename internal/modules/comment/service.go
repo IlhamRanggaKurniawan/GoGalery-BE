@@ -1,6 +1,8 @@
 package comment
 
-import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+import (
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+)
 
 type CommentService interface {
 	SendComment(userId uint64, contentId uint64, text string) (*entity.Comment, error)
@@ -20,13 +22,13 @@ func NewContentService(commentRepository CommentRepository) CommentService {
 }
 
 func (s *commentService) SendComment(userId uint64, contentId uint64, text string) (*entity.Comment, error) {
-	content, err := s.commentRepository.Create(userId, contentId, text)
+	comment, err := s.commentRepository.Create(userId, contentId, text)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return content, nil
+	return comment, nil
 }
 
 func (s *commentService) updateComment(id uint64, text string) (*entity.Comment, error) {

@@ -1,6 +1,10 @@
 package aImessage
 
-import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+import (
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+	fetchapi "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/fetchAPI"
+)
 
 type AIMessageService interface {
 	SendMessage(senderId uint64, conversationID uint64, message string) (*entity.AIMessage, error)
@@ -21,13 +25,23 @@ func NewAIMessageService(aIMessageRepository AIMessageRepository) AIMessageServi
 
 func (s *aIMessageService) SendMessage(senderId uint64, conversationID uint64, message string) (*entity.AIMessage, error) {
 
-	aIMessage, err := s.aIMessageRepository.Create(senderId, conversationID, message, message)
+	responseChan := make(chan fetchapi.OpenAIResponse)
+	errorChan := make(chan error)
 
-	if err != nil {
+	go fetchapi.FetchOpenAI(message, responseChan, errorChan)
+
+	select {
+
+	case openAIResponse := <-responseChan:
+		aIMessage, err := s.aIMessageRepository.Create(senderId, conversationID, message, openAIResponse.Choices[0].Message.Content)
+		if err != nil {
+			return nil, err
+		}
+		return aIMessage, nil
+
+	case err := <-errorChan:
 		return nil, err
 	}
-
-	return aIMessage, nil
 }
 
 func (s *aIMessageService) GetAllMessages(conversationID uint64) (*[]entity.AIMessage, error) {

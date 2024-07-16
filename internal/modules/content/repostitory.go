@@ -57,7 +57,7 @@ func (r *contentRepository) FindOne(id uint64) (*entity.Content, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	return &content, nil
 }
 

@@ -9,6 +9,7 @@ type FollowRepository interface {
 	Create(followerId uint64, followingId uint64) (*entity.Follow, error)
 	FindAll(userId uint64) (*[]entity.Follow, *[]entity.Follow, error)
 	FindOne(followerId uint64, followingId uint64) (*entity.Follow, error)
+	GetDB() *gorm.DB
 	DeleteOne(id uint64) error
 }
 
@@ -64,6 +65,10 @@ func (r *followRepository) FindOne(followerId uint64, followingId uint64) (*enti
 	}
 
 	return &follow, nil
+}
+
+func (r *followRepository) GetDB() *gorm.DB {
+	return r.db
 }
 
 func (r *followRepository) DeleteOne(id uint64) error {

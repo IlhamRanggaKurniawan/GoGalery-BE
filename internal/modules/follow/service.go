@@ -1,6 +1,9 @@
 package follow
 
-import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+import (
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/notification"
+)
 
 type FollowService interface {
 	followUser(followerId uint64, followingId uint64) (*entity.Follow, error)
@@ -26,6 +29,12 @@ func (s *followService) followUser(followerId uint64, followingId uint64) (*enti
 	if err != nil {
 		return nil, err
 	}
+
+	DB := s.followRepository.GetDB()
+
+	notificationRepository := notification.NewNotificationRepository(DB)
+
+	notificationRepository.Create(followingId, followerId, "Start Following you")
 
 	return follow, nil
 }

@@ -1,6 +1,8 @@
 package like
 
-import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+import (
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+)
 
 type LikeContentService interface {
 	LikeContent(userId uint64, contentId uint64) (*entity.LikeContent, error)
