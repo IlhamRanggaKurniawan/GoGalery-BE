@@ -3,13 +3,14 @@ package entity
 import "time"
 
 type User struct {
-	ID                  uint64   `gorm:"primaryKey;autoIncrement"`
+	ID                  uint64 `gorm:"primaryKey;autoIncrement"`
 	Username            string `gorm:"unique"`
 	Email               string `gorm:"unique"`
 	Password            string
 	Role                string `gorm:"default:member"`
 	ProfileUrl          *string
 	Bio                 *string
+	Token               *string
 	Contents            []Content        `gorm:"foreignKey:UploaderID;constraint:OnDelete:CASCADE;"`
 	LikeContents        []LikeContent    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	SaveContents        []SaveContent    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`

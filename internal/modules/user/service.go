@@ -2,13 +2,13 @@ package user
 
 import (
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type UserService interface {
 	Register(username string, email string, password string) (*entity.User, error)
 	Login(username string, password string) (*entity.User, error)
-	UpdateUser(username *string, bio *string, profileUrl *string, password *string) (*entity.User, error)
+	UpdateUser(username string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
 	FindAllUsers(username string) (*[]entity.User, error)
 	FindOneUser(username string) (*entity.User, error)
 	DeleteUser(id uint64) error
@@ -26,11 +26,9 @@ func NewUserService(userRepository UserRepository) UserService {
 
 func (s *userService) Register(username string, email string, password string) (*entity.User, error) {
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, _ := utils.HashPassword(password)
 
-	hashedPasswordStr := string(hashedPassword)
-
-	user, err := s.userRepository.Create(username, email, hashedPasswordStr)
+	user, err := s.userRepository.Create(username, email, *hashedPassword)
 
 	if err != nil {
 		return nil, err
@@ -47,7 +45,7 @@ func (s *userService) Login(username string, password string) (*entity.User, err
 		return nil, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = utils.ComparePassword(user.Password, password)
 
 	if err != nil {
 		return nil, err
@@ -56,9 +54,9 @@ func (s *userService) Login(username string, password string) (*entity.User, err
 	return user, nil
 }
 
-func (s *userService) UpdateUser(username *string, bio *string, profileUrl *string, password *string) (*entity.User, error) {
+func (s *userService) UpdateUser(username string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
 
-	user, err := s.userRepository.Update(username, bio, profileUrl, password)
+	user, err := s.userRepository.Update(username, bio, profileUrl, password, token)
 
 	if err != nil {
 		return nil, err

@@ -16,6 +16,7 @@ type input struct {
 	Caption    string `json:"caption"`
 }
 
+
 func NewHandler(contentService ContentService) Handler {
 	return Handler{contentService}
 }
@@ -32,7 +33,7 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 
 	// tes, _ := strconv.ParseUint(uploaderID, 10, 32)
 
-	content, _ := h.contentService.UploadContent(input.UploaderID, input.Caption, "tess")
+	content, _ := h.contentService.UploadContent(input.UploaderID, input.Caption, input.Caption)
 
 	w.Header().Set("Content-Type", "application/json")
 

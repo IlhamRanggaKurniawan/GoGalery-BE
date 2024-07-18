@@ -3,14 +3,15 @@ package server
 import (
 	"net/http"
 
-	aIconversation "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/aIConversation"
-	aImessage "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/aIMessage"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/middleware"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/aIConversation"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/aIMessage"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/comment"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/content"
-	directmessage "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/directMessage"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/directMessage"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/feedback"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/follow"
-	groupchat "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/groupChat"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/groupChat"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/like"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/message"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/notification"
@@ -20,6 +21,11 @@ import (
 
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
+
+	stack := middleware.CreateStack(
+		middleware.AuthMiddleware,
+		middleware.CorsMiddleware,
+	)
 
 	userRepository := user.NewUserRepository(s.DB)
 	userService := user.NewUserService(userRepository)
@@ -78,7 +84,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /user/findall", userHandler.FindAllUsers)
 	mux.HandleFunc("GET /user/findone", userHandler.FindUser)
 	mux.HandleFunc("PUT /user/update", userHandler.UpdateUser)
+	mux.HandleFunc("DELETE /user/logout", userHandler.Logout)
 	mux.HandleFunc("DELETE /user/delete", userHandler.DeleteUser)
+
+	mux.HandleFunc("GET /token", userHandler.GetToken)
 
 	mux.HandleFunc("POST /content/upload", contentHandler.UploadContent)
 	mux.HandleFunc("GET /content/findall", contentHandler.GetAllContent)
@@ -128,7 +137,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /aimessage/findall", aiMessageHandler.GetAllMessages)
 	mux.HandleFunc("PUT /aimessage/update", aiMessageHandler.UpdateMessage)
 	mux.HandleFunc("DELETE /aimessage/delete", aiMessageHandler.DeleteMessage)
-	
+
 	mux.HandleFunc("POST /follow/create", followHandler.FollowUser)
 	mux.HandleFunc("GET /follow/findall", followHandler.GetAllFollows)
 	mux.HandleFunc("GET /follow/findone", followHandler.CheckFollowing)
@@ -139,5 +148,5 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("PUT /notification/update", notificationHandler.UpdateNotifications)
 	mux.HandleFunc("DELETE /notification/delete", notificationHandler.DeleteNotifications)
 
-	return mux
+	return stack(mux)
 }
