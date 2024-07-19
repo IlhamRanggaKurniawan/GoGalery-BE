@@ -3,7 +3,6 @@ package content
 import (
 	"encoding/json"
 	"net/http"
-
 )
 
 type Handler struct {
@@ -13,9 +12,9 @@ type Handler struct {
 type input struct {
 	ID         uint64 `json:"id"`
 	UploaderID uint64 `json:"uploaderId"`
+	UserID     uint64 `json:"userId"`
 	Caption    string `json:"caption"`
 }
-
 
 func NewHandler(contentService ContentService) Handler {
 	return Handler{contentService}
@@ -30,8 +29,6 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	// tes, _ := strconv.ParseUint(uploaderID, 10, 32)
 
 	content, _ := h.contentService.UploadContent(input.UploaderID, input.Caption, input.Caption)
 
@@ -86,6 +83,26 @@ func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content, _ := h.contentService.GetOneContent(input.ID)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(content); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Request) {
+	var input input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	content, _ := h.contentService.GetAllContentsByFollowing(input.UserID)
 
 	w.Header().Set("Content-Type", "application/json")
 

@@ -65,6 +65,13 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
+	user ,err = h.userService.UpdateUser(user.Username, nil, nil, nil, &refreshToken)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
 	res := authenticationRes{
@@ -82,25 +89,26 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	user, _ := h.userService.Login(input.Username, input.Password)
+	user, err := h.userService.Login(input.Username, input.Password)
+	if err != nil {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		return
+	}
 
 	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role)
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to generate access token", http.StatusInternalServerError)
 		return
 	}
 
 	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role)
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to generate refresh token", http.StatusInternalServerError)
 		return
 	}
 
@@ -111,6 +119,12 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Path:     "/",
 	})
+
+	user, err = h.userService.UpdateUser(user.Username, nil, nil, nil, &refreshToken)
+	if err != nil {
+		http.Error(w, "Failed to update user with refresh token", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -126,6 +140,14 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	var input input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "RefreshToken",
@@ -134,6 +156,15 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Path:     "/",
 	})
+
+	token := ""
+
+	_, err = h.userService.UpdateUser(input.Username, nil, nil, nil, &token)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -240,20 +271,21 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
-
-	cookie, _ := r.Cookie("RefreshToken")
-
-	token, err := utils.ValidateToken(cookie.Value, "Access Token")
-
+	cookie, err := r.Cookie("RefreshToken")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Refresh token not found", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := utils.ValidateToken(cookie.Value, "Refresh Token")
+	if err != nil {
+		http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
 		return
 	}
 
 	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.ID, token.Role)
-
-	if err != nil && accessToken == ""{
-		http.Error(w, "Could not create new access token", http.StatusInternalServerError)
+	if err != nil {
+		http.Error(w, "Failed to generate access token", http.StatusInternalServerError)
 		return
 	}
 

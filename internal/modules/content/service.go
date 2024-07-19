@@ -6,6 +6,7 @@ type ContentService interface {
 	UploadContent(uploaderId uint64, caption string, path string) (*entity.Content, error)
 	UpdateContent(id uint64, caption string) (*entity.Content, error)
 	GetAllContents() (*[]entity.Content, error)
+	GetAllContentsByFollowing(userId uint64) (*[]entity.Content, error) 
 	GetOneContent(id uint64) (*entity.Content, error)
 	DeleteContent(id uint64) error
 }
@@ -47,6 +48,17 @@ func (s *contentService) UpdateContent(id uint64, caption string) (*entity.Conte
 func (s *contentService) GetAllContents() (*[]entity.Content, error) {
 
 	contents, err := s.contentRepository.FindAll()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return contents, nil
+}
+
+func (s *contentService) GetAllContentsByFollowing(userId uint64) (*[]entity.Content, error) {
+
+	contents, err := s.contentRepository.FindAllByFollowing(userId)
 
 	if err != nil {
 		return nil, err

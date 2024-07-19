@@ -91,6 +91,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	mux.HandleFunc("POST /content/upload", contentHandler.UploadContent)
 	mux.HandleFunc("GET /content/findall", contentHandler.GetAllContent)
+	mux.HandleFunc("GET /content/findall/following", contentHandler.GetAllContentByFollowing)
 	mux.HandleFunc("GET /content/findone", contentHandler.GetOneContent)
 	mux.HandleFunc("PUT /content/update", contentHandler.UpdateContent)
 	mux.HandleFunc("DELETE /content/delete", contentHandler.DeleteContent)

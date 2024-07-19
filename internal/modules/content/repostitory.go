@@ -8,6 +8,7 @@ import (
 type ContentRepository interface {
 	Create(uploaderId uint64, caption string, url string) (*entity.Content, error)
 	FindAll() (*[]entity.Content, error)
+	FindAllByFollowing(userId uint64) (*[]entity.Content, error)
 	FindOne(id uint64) (*entity.Content, error)
 	Update(id uint64, caption string) (*entity.Content, error)
 	DeleteOne(id uint64) error
@@ -57,8 +58,22 @@ func (r *contentRepository) FindOne(id uint64) (*entity.Content, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &content, nil
+}
+
+func (r *contentRepository) FindAllByFollowing(userId uint64) (*[]entity.Content, error) {
+	var contents []entity.Content
+
+	err := r.db.Joins("JOIN follows ON follows.following_id = contents.uploader_id").
+		Where("follows.follower_id = ?", userId).
+		Preload("Uploader").Find(&contents).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &contents, nil
 }
 
 func (r *contentRepository) Update(id uint64, caption string) (*entity.Content, error) {
