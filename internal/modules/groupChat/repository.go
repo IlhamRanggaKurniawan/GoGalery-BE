@@ -1,8 +1,6 @@
 package groupchat
 
 import (
-	"fmt"
-
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"gorm.io/gorm"
 )
@@ -59,8 +57,6 @@ func (r *groupChatRepository) FindAll(userId uint64) (*[]entity.GroupChat, error
 func (r *groupChatRepository) FindOne(id uint64) (*entity.GroupChat, error) {
 
 	var groupChat entity.GroupChat
-
-	fmt.Println(id)
 
 	err := r.db.Preload("Messages").Preload("Members").Where("id = ?", id).Take(&groupChat).Error
 

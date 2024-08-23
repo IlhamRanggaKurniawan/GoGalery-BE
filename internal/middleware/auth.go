@@ -63,18 +63,26 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		allowedOrigins := []string{
 			"https://connect-verse-seven.vercel.app",
 			"http://localhost:3000",
+			"http://localhost:3001",
+			"",
 		}
 
 		origin := r.Header.Get("Origin")
+
 		for _, allowedOrigin := range allowedOrigins {
 			if origin == allowedOrigin {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				break
 			}
 		}
 
-		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})

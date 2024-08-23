@@ -6,7 +6,7 @@ import (
 )
 
 type ContentRepository interface {
-	Create(uploaderId uint64, caption string, url string) (*entity.Content, error)
+	Create(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error)
 	FindAll() (*[]entity.Content, error)
 	FindAllByFollowing(userId uint64) (*[]entity.Content, error)
 	FindOne(id uint64) (*entity.Content, error)
@@ -22,11 +22,12 @@ func NewContentRepository(db *gorm.DB) ContentRepository {
 	return &contentRepository{db: db}
 }
 
-func (r *contentRepository) Create(uploaderId uint64, caption string, url string) (*entity.Content, error) {
+func (r *contentRepository) Create(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error) {
 	content := entity.Content{
 		UploaderID: uploaderId,
 		Caption:    caption,
 		URL:        url,
+		Type:       contentType,
 	}
 
 	err := r.db.Create(&content).Error
@@ -41,7 +42,7 @@ func (r *contentRepository) Create(uploaderId uint64, caption string, url string
 func (r *contentRepository) FindAll() (*[]entity.Content, error) {
 	var contents []entity.Content
 
-	err := r.db.Find(&contents).Error
+	err := r.db.Preload("Uploader").Find(&contents).Error
 
 	if err != nil {
 		return nil, err

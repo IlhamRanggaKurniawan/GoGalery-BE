@@ -10,9 +10,9 @@ type Handler struct {
 }
 
 type input struct {
-	ID             uint64   `json:"id"`
-	SenderID       uint64   `json:"senderId"`
-	ConversationId uint64   `json:"conversationId"`
+	ID             uint64 `json:"id"`
+	SenderID       uint64 `json:"senderId"`
+	ConversationId uint64 `json:"conversationId"`
 	Message        string `json:"message"`
 }
 

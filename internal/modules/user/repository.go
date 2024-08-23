@@ -50,7 +50,7 @@ func (r *userRepository) FindAll(username string) (*[]entity.User, error) {
 func (r *userRepository) FindOne(username string) (*entity.User, error) {
 	var user entity.User
 
-	err := r.db.Where("username = ?", username).Take(&user).Error
+	err := r.db.Where("username = ?", username).Preload("Contents").Take(&user).Error
 
 	if err != nil {
 		return nil, err

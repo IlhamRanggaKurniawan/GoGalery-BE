@@ -20,7 +20,7 @@ type Claims struct {
 }
 
 func GenerateAccessToken(username string, email string, id uint64, role string) (string, error) {
-	Exp := time.Now().Add(time.Minute * 5)
+	Exp := time.Now().Add(24 * time.Hour * 7)
 
 	claims := &Claims{
 		Username: username,

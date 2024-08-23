@@ -2,9 +2,9 @@ package follow
 
 import (
 	"encoding/json"
-	"net/http"
-
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
+	"net/http"
 )
 
 type Handler struct {
@@ -12,10 +12,10 @@ type Handler struct {
 }
 
 type input struct {
-	ID              uint64   `json:"id"`
-	UserID          uint64   `json:"userId"`
-	FollowerID      uint64   `json:"followerId"`
-	FollowingID     uint64   `json:"followingId"`
+	ID          uint64 `json:"id"`
+	UserID      uint64 `json:"userId"`
+	FollowerID  uint64 `json:"followerId"`
+	FollowingID uint64 `json:"followingId"`
 }
 
 func NewHandler(followService FollowService) Handler {
@@ -54,11 +54,11 @@ func (h *Handler) GetAllFollows(w http.ResponseWriter, r *http.Request) {
 
 	follower, following, _ := h.followService.GetAllFollows(input.UserID)
 
-	follow := struct{
-		Follower *[]entity.Follow `json:"follower"`
+	follow := struct {
+		Follower  *[]entity.Follow `json:"follower"`
 		Following *[]entity.Follow `json:"following"`
 	}{
-		Follower: follower,
+		Follower:  follower,
 		Following: following,
 	}
 
@@ -71,16 +71,28 @@ func (h *Handler) GetAllFollows(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CheckFollowing(w http.ResponseWriter, r *http.Request) {
-	var input input
+	params := map[string]string{
+		"followerId":  "number",
+		"followingId": "number",
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	results := utils.GetMultipleQueryParams(w, r, params)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	followerId, ok := results["followerId"].(uint64)
+
+	if !ok {
+		http.Error(w, "Invalid type for 'followerId'", http.StatusBadRequest)
 		return
 	}
 
-	follow, _ := h.followService.CheckFollowing(input.FollowerID, input.FollowingID)
+	followingId, ok := results["followingId"].(uint64)
+
+	if !ok {
+		http.Error(w, "Invalid type for 'contentId'", http.StatusBadRequest)
+		return
+	}
+
+	follow, _ := h.followService.CheckFollowing(followerId, followingId)
 
 	w.Header().Set("Content-Type", "application/json")
 

@@ -3,8 +3,7 @@ package directmessage
 import (
 	"encoding/json"
 	"net/http"
-
-	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -12,9 +11,9 @@ type Handler struct {
 }
 
 type input struct {
-	ID           uint64 `json:"id"`
-	UserID       uint64 `json:"userId"`
-	Participants []entity.User
+	ID           uint64   `json:"id"`
+	UserID       uint64   `json:"userId"`
+	Participants []uint64 `json:"Participants"`
 }
 
 func NewHandler(directMessageService DirectMessageService) Handler {
@@ -42,20 +41,55 @@ func (h *Handler) CreateDirectMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllDirectMessages(w http.ResponseWriter, r *http.Request) {
-	var input input
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if userId == 0 {
+		http.Error(w, "params is empty", http.StatusBadRequest)
 		return
 	}
 
-	feedback, _ := h.directMessageService.GetAllDirectMessages(input.UserID)
+	directMessage, _ := h.directMessageService.GetAllDirectMessages(userId)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(feedback); err != nil {
+	if err := json.NewEncoder(w).Encode(directMessage); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) GetOneDirectMessageByParticipants(w http.ResponseWriter, r *http.Request) {
+	params := map[string]string{
+		"participant1Id": "number",
+		"participant2Id": "number",
+	}
+
+	results := utils.GetMultipleQueryParams(w, r, params)
+
+	if results == nil {
+		http.Error(w, "Missing participant1 and participant2", http.StatusBadRequest)
+		return
+	}
+
+	participant1Id, ok := results["participant1Id"].(uint64)
+	if !ok {
+		http.Error(w, "Invalid type for 'id'", http.StatusInternalServerError)
+		return
+	}
+
+	participant2Id, ok := results["participant2Id"].(uint64)
+	if !ok {
+		http.Error(w, "Invalid type for 'name'", http.StatusInternalServerError)
+		return
+	}
+
+	participants := []uint64{participant1Id, participant2Id}
+
+	directMessage, _ := h.directMessageService.GetOneDirectMessageByParticipants(participants)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(directMessage); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

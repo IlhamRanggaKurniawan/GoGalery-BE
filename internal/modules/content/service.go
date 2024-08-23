@@ -3,10 +3,10 @@ package content
 import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 
 type ContentService interface {
-	UploadContent(uploaderId uint64, caption string, path string) (*entity.Content, error)
+	UploadContent(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error)
 	UpdateContent(id uint64, caption string) (*entity.Content, error)
 	GetAllContents() (*[]entity.Content, error)
-	GetAllContentsByFollowing(userId uint64) (*[]entity.Content, error) 
+	GetAllContentsByFollowing(userId uint64) (*[]entity.Content, error)
 	GetOneContent(id uint64) (*entity.Content, error)
 	DeleteContent(id uint64) error
 }
@@ -21,11 +21,9 @@ func NewContentService(contentRepository ContentRepository) ContentService {
 	}
 }
 
-func (s *contentService) UploadContent(uploaderId uint64, caption string, path string) (*entity.Content, error) {
+func (s *contentService) UploadContent(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error) {
 
-	url := "https://gsjjcfotrvkfpibhnnji.supabase.co/storage/v1/object/public/Connect%20Verse/" + path
-
-	content, err := s.contentRepository.Create(uploaderId, caption, url)
+	content, err := s.contentRepository.Create(uploaderId, caption, url, contentType)
 
 	if err != nil {
 		return nil, err

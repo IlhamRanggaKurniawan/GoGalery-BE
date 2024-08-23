@@ -3,6 +3,8 @@ package aIconversation
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -10,8 +12,8 @@ type Handler struct {
 }
 
 type input struct {
-	ID           uint64 `json:"id"`
-	UserID       uint64 `json:"userId"`
+	ID     uint64 `json:"id"`
+	UserID uint64 `json:"userId"`
 }
 
 func NewHandler(aIConversationService AIConversationService) Handler {
@@ -39,16 +41,14 @@ func (h *Handler) CreateConversation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetConversation(w http.ResponseWriter, r *http.Request) {
-	var input input
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if userId == 0 {
+		http.Error(w, "params is empty", http.StatusBadRequest)
 		return
 	}
 
-	conversation, _ := h.aIConversationService.GetConversation(input.UserID)
+	conversation, _ := h.aIConversationService.GetConversation(userId)
 
 	w.Header().Set("Content-Type", "application/json")
 

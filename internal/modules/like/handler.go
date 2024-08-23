@@ -3,6 +3,8 @@ package like
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -60,16 +62,26 @@ func (h *Handler) GetAllLikes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetOneLike(w http.ResponseWriter, r *http.Request) {
-	var input input
+	params := map[string]string{
+		"userId":    "number",
+		"contentId": "number",
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	results := utils.GetMultipleQueryParams(w, r, params)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	userId, ok := results["userId"].(uint64)
+	if !ok {
+		http.Error(w, "Invalid type for 'userId'", http.StatusBadRequest)
 		return
 	}
 
-	likes, _ := h.likeContentService.GetOneLike(input.UserID, input.ContentID)
+	contentId, ok := results["contentId"].(uint64)
+	if !ok {
+		http.Error(w, "Invalid type for 'contentId'", http.StatusBadRequest)
+		return
+	}
+
+	likes, _ := h.likeContentService.GetOneLike(userId, contentId)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -80,16 +92,14 @@ func (h *Handler) GetOneLike(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UnlikeContent(w http.ResponseWriter, r *http.Request) {
-	var input input
+	id := utils.GetPathParam(w, r, "id", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if id == 0 {
+		http.Error(w, "params is empty", http.StatusBadRequest)
 		return
 	}
 
-	err = h.likeContentService.UnlikeContent(input.ID)
+	err := h.likeContentService.UnlikeContent(id)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
