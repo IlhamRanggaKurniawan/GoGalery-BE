@@ -4,7 +4,7 @@ import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity
 
 type SaveContentService interface {
 	SaveContent(userId uint64, contentId uint64) (*entity.SaveContent, error)
-	GetAllSaves(contentId uint64) (*[]entity.SaveContent, error)
+	GetAllSaves(userId uint64) (*[]entity.SaveContent, error)
 	GetOneSave(userId uint64, contentId uint64) (*entity.SaveContent, error)
 	UnsaveContent(id uint64) error
 }
@@ -30,9 +30,9 @@ func (s *saveContentService) SaveContent(userId uint64, contentId uint64) (*enti
 	return save, nil
 }
 
-func (s *saveContentService) GetAllSaves(contentId uint64) (*[]entity.SaveContent, error) {
+func (s *saveContentService) GetAllSaves(userId uint64) (*[]entity.SaveContent, error) {
 
-	saves, err := s.saveContentRepository.FindAll(contentId)
+	saves, err := s.saveContentRepository.FindAll(userId)
 
 	if err != nil {
 		return nil, err

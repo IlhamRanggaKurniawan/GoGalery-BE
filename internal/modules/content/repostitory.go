@@ -54,7 +54,7 @@ func (r *contentRepository) FindAll() (*[]entity.Content, error) {
 func (r *contentRepository) FindOne(id uint64) (*entity.Content, error) {
 	var content entity.Content
 
-	err := r.db.Preload("Comments").Where("id = ?", id).Take(&content).Error
+	err := r.db.Preload("Comments").Preload("Uploader").Where("id = ?", id).Take(&content).Error
 
 	if err != nil {
 		return nil, err

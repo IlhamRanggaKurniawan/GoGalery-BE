@@ -3,6 +3,8 @@ package notification
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -10,8 +12,8 @@ type Handler struct {
 }
 
 type input struct {
-	ReceiverID uint64   `json:"receiverId"`
-	TriggerID  uint64   `json:"triggerId"`
+	ReceiverID uint64 `json:"receiverId"`
+	TriggerID  uint64 `json:"triggerId"`
 	Content    string `json:"content"`
 }
 
@@ -40,16 +42,10 @@ func (h *Handler) CreateNotification(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllNotifications(w http.ResponseWriter, r *http.Request) {
-	var input input
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	notifications, _ := h.notificationService.GetAllNotifications(input.ReceiverID)
+	notifications, _ := h.notificationService.GetAllNotifications(userId)
 
 	w.Header().Set("Content-Type", "application/json")
 

@@ -3,6 +3,8 @@ package message
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -10,18 +12,44 @@ type Handler struct {
 }
 
 type input struct {
-	ID              uint64   `json:"id"`
-	SenderID        uint64   `json:"senderId"`
-	Text            string `json:"text"`
-	DirectMessageID uint64   `json:"directMessageId"`
-	GroupChatID     uint64   `json:"groupChatId"`
+	ID              uint64 `json:"id"`
+	SenderID        uint64 `json:"senderId"`
+	Message         string `json:"message"`
+	DirectMessageID uint64 `json:"directMessageId"`
+	GroupChatID     uint64 `json:"groupChatId"`
 }
 
 func NewHandler(messageService MessageService) Handler {
 	return Handler{messageService}
 }
 
-func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SendPrivateMessage(w http.ResponseWriter, r *http.Request) {
+	conversationId := utils.GetPathParam(w, r, "id", "number").(uint64)
+
+	var input input
+
+	
+	err := json.NewDecoder(r.Body).Decode(&input)
+	
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+
+	message, _ := h.messageService.SendMessage(input.SenderID, conversationId, 0, input.Message)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(message); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) SendGroupMessage(w http.ResponseWriter, r *http.Request) {
+	conversationId := utils.GetPathParam(w, r, "conversationId", "number").(uint64)
+
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -31,7 +59,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, _ := h.messageService.SendMessage(input.SenderID, input.DirectMessageID, input.GroupChatID, input.Text)
+	message, _ := h.messageService.SendMessage(input.SenderID, 0, conversationId, input.Message)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -71,7 +99,7 @@ func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, _ := h.messageService.UpdateMessage(input.ID, input.Text)
+	messages, _ := h.messageService.UpdateMessage(input.ID, input.Message)
 
 	w.Header().Set("Content-Type", "application/json")
 

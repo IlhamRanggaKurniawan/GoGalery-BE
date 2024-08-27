@@ -8,7 +8,7 @@ import (
 type UserService interface {
 	Register(username string, email string, password string) (*entity.User, error)
 	Login(username string, password string) (*entity.User, error)
-	UpdateUser(username string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
+	UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
 	FindAllUsers(username string) (*[]entity.User, error)
 	FindOneUser(username string) (*entity.User, error)
 	DeleteUser(id uint64) error
@@ -54,9 +54,9 @@ func (s *userService) Login(username string, password string) (*entity.User, err
 	return user, nil
 }
 
-func (s *userService) UpdateUser(username string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
+func (s *userService) UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
 
-	user, err := s.userRepository.Update(username, bio, profileUrl, password, token)
+	user, err := s.userRepository.Update(id, bio, profileUrl, password, token)
 
 	if err != nil {
 		return nil, err

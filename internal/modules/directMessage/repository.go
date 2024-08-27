@@ -62,7 +62,7 @@ func (r *directMessageRepository) FindOne(id uint64) (*entity.DirectMessage, err
 
 	var DirectMessage entity.DirectMessage
 
-	err := r.db.Preload("Messages").Preload("Participants").Where("id = ?", id).Take(&DirectMessage).Error
+	err := r.db.Preload("Messages").Preload("Participant1").Preload("Participant2").Where("id = ?", id).Take(&DirectMessage).Error
 
 	if err != nil {
 		return nil, err

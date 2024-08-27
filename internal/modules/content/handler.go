@@ -45,19 +45,16 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Maximum file size is 15MB", http.StatusBadRequest)
 		return
 	}
-	
+
 	file, handler, err := r.FormFile("file")
-	
-	fmt.Println(file)
+
 	if err != nil {
 		fmt.Fprintf(w, "Error retrieving the file: %v", err)
 		return
 	}
 
 	uploaderIdStr := r.FormValue("uploaderId")
-	fmt.Println(uploaderIdStr)
-
-
+	
 	if uploaderIdStr == "" {
 		http.Error(w, "uploaderId must be filled", http.StatusBadRequest)
 		return
@@ -92,7 +89,7 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	fileUrl, err := utils.UploadFileToS3(h.S3Client, file, newFileName, h.BucketName)
+	fileUrl, err := utils.UploadFileToS3(h.S3Client, file, newFileName, h.BucketName, "Content")
 
 	if err != nil {
 		fmt.Fprintf(w, "Unable to upload file to S3: %v", err)
@@ -162,16 +159,9 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
-	var input input
+	id := utils.GetPathParam(w, r, "id", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	content, _ := h.contentService.GetOneContent(input.ID)
+	content, _ := h.contentService.GetOneContent(id)
 
 	w.Header().Set("Content-Type", "application/json")
 

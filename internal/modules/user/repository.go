@@ -11,7 +11,7 @@ type UserRepository interface {
 	FindAll(username string) (*[]entity.User, error)
 	FindOne(username string) (*entity.User, error)
 	FindOneByToken(token string) (*entity.User, error)
-	Update(username string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
+	Update(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
 	DeleteOne(id uint64) error
 }
 
@@ -59,6 +59,18 @@ func (r *userRepository) FindOne(username string) (*entity.User, error) {
 	return &user, nil
 }
 
+func (r *userRepository) FindOneById(id uint64) (*entity.User, error) {
+	var user entity.User
+
+	err := r.db.Where("id = ?", id).Take(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (r *userRepository) FindOneByToken(token string) (*entity.User, error) {
 	var user entity.User
 
@@ -71,9 +83,9 @@ func (r *userRepository) FindOneByToken(token string) (*entity.User, error) {
 	return &user, nil
 }
 
-func (r *userRepository) Update(username string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
+func (r *userRepository) Update(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
 
-	user, err := r.FindOne(username)
+	user, err := r.FindOneById(id)
 
 	if err != nil {
 		return nil, err
@@ -90,7 +102,7 @@ func (r *userRepository) Update(username string, bio *string, profileUrl *string
 	if token != nil {
 		user.Token = token
 	}
-	
+
 	if password != nil {
 		hashedPassword, _ := utils.HashPassword(*password)
 

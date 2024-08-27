@@ -39,7 +39,7 @@ func (r *notificationRepository) Create(receiverId uint64, triggerId uint64, con
 
 func (r *notificationRepository) FindAll(receiverId uint64) (*[]entity.Notification, error) {
 	var notifications []entity.Notification
-	err := r.db.Where("receiver_id = ?", receiverId).Find(&notifications).Error
+	err := r.db.Preload("Trigger").Preload("Receiver").Where("receiver_id = ?", receiverId).Find(&notifications).Error
 
 	if err != nil {
 		return nil, err

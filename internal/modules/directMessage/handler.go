@@ -96,20 +96,13 @@ func (h *Handler) GetOneDirectMessageByParticipants(w http.ResponseWriter, r *ht
 }
 
 func (h *Handler) GetOneDirectMessage(w http.ResponseWriter, r *http.Request) {
-	var input input
+	id := utils.GetPathParam(w, r, "id", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	feedback, _ := h.directMessageService.GetOneDirectMessage(input.ID)
+	directMessage, _ := h.directMessageService.GetOneDirectMessage(id)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(feedback); err != nil {
+	if err := json.NewEncoder(w).Encode(directMessage); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

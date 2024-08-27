@@ -7,7 +7,7 @@ import (
 
 type SaveContentRepository interface {
 	Create(userId uint64, contentId uint64) (*entity.SaveContent, error)
-	FindAll(contentId uint64) (*[]entity.SaveContent, error)
+	FindAll(userId uint64) (*[]entity.SaveContent, error)
 	FindOne(userId uint64, contentId uint64) (*entity.SaveContent, error)
 	DeleteOne(id uint64) error
 }
@@ -35,10 +35,10 @@ func (r *saveContentRepository) Create(userId uint64, contentId uint64) (*entity
 	return &save, nil
 }
 
-func (r *saveContentRepository) FindAll(contentId uint64) (*[]entity.SaveContent, error) {
+func (r *saveContentRepository) FindAll(userId uint64) (*[]entity.SaveContent, error) {
 	var saves []entity.SaveContent
 
-	err := r.db.Where("content_id = ?", contentId).Find(&saves).Error
+	err := r.db.Where("user_id = ?", userId).Preload("Content").Preload("Content.Uploader").Find(&saves).Error
 
 	if err != nil {
 		return nil, err

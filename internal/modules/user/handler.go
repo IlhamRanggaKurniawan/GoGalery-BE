@@ -2,15 +2,19 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 type Handler struct {
 	userService UserService
+	S3Client    *s3.Client
+	BucketName  string
 }
 
 type input struct {
@@ -28,8 +32,12 @@ type authenticationRes struct {
 	AccessToken string
 }
 
-func NewHandler(userService UserService) Handler {
-	return Handler{userService}
+func NewHandler(userService UserService, s3Client *s3.Client, bucketName string) Handler {
+	return Handler{
+		userService: userService,
+		S3Client:    s3Client,
+		BucketName:  bucketName,
+	}
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -50,14 +58,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := h.userService.Register(input.Username, input.Email, input.Password)
 
-	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role)
+	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role)
+	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -80,7 +88,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	user, err = h.userService.UpdateUser(user.Username, nil, nil, nil, &refreshToken)
+	user, err = h.userService.UpdateUser(user.ID, nil, nil, nil, &refreshToken)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -118,13 +126,14 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role)
+	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
+
 	if err != nil {
 		http.Error(w, "Failed to generate access token", http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role)
+	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
 	if err != nil {
 		http.Error(w, "Failed to generate refresh token", http.StatusInternalServerError)
 		return
@@ -146,7 +155,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	user, err = h.userService.UpdateUser(user.Username, nil, nil, nil, &refreshToken)
+	user, err = h.userService.UpdateUser(user.ID, nil, nil, nil, &refreshToken)
 	if err != nil {
 		http.Error(w, "Failed to update user with refresh token", http.StatusInternalServerError)
 		return
@@ -166,14 +175,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	id := utils.GetPathParam(w, r, "id", "number").(uint64)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "RefreshToken",
@@ -185,7 +187,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	token := ""
 
-	_, err = h.userService.UpdateUser(input.Username, nil, nil, nil, &token)
+	_, err := h.userService.UpdateUser(id, nil, nil, nil, &token)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -207,16 +209,49 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var input input
+	userId := utils.GetPathParam(w, r, "id", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	const maxUploadSize = 10 << 20
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
+
+	err := r.ParseMultipartForm(maxUploadSize)
+
+	if err != nil {
+		http.Error(w, "Maximum file size is 15MB", http.StatusBadRequest)
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+
+	if err != nil {
+		fmt.Fprintf(w, "Error retrieving the file: %v", err)
+		return
+	}
+
+	bio := r.FormValue("bio")
+
+	password := r.FormValue("password")
+
+	profileUrl := r.FormValue("profileUrl")
+
+	var url string
+
+	if profileUrl == "" {
+		newFileName := utils.GenerateFileName(handler)
+
+		url, err = utils.UploadFileToS3(h.S3Client, file, newFileName, h.BucketName, "Profile")
+	} else {
+
+		utils.UpdateFileInS3(h.S3Client, file, profileUrl, h.BucketName)
+	}
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	user, _ := h.userService.UpdateUser(input.Username, &input.Bio, &input.ProfileUrl, &input.Password, nil)
+	user, _ := h.userService.UpdateUser(userId, &bio, &url, &password, nil)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -312,7 +347,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.ID, token.Role)
+	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.ID, token.Role, token.ProfileUrl, token.Bio)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to generate access token"})

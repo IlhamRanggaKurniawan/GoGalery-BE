@@ -2,8 +2,8 @@ package save
 
 import (
 	"encoding/json"
-	"net/http"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
+	"net/http"
 )
 
 type Handler struct {
@@ -41,20 +41,13 @@ func (h *Handler) SaveContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllSaves(w http.ResponseWriter, r *http.Request) {
-	var input input
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	likes, _ := h.saveContentService.GetAllSaves(input.ContentID)
+	contents, _ := h.saveContentService.GetAllSaves(userId)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(likes); err != nil {
+	if err := json.NewEncoder(w).Encode(contents); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
