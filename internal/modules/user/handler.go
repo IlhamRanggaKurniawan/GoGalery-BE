@@ -185,6 +185,14 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "AccessToken",
+		Value:    "",
+		Expires:  time.Now().Add(-1),
+		HttpOnly: true,
+		Path:     "/",
+	})
+
 	token := ""
 
 	_, err := h.userService.UpdateUser(id, nil, nil, nil, &token)
@@ -222,26 +230,25 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, handler, err := r.FormFile("file")
-
-	if err != nil {
-		fmt.Fprintf(w, "Error retrieving the file: %v", err)
-		return
-	}
+	file, handler, _ := r.FormFile("file")
 
 	bio := r.FormValue("bio")
 
 	password := r.FormValue("password")
 
+	fmt.Println(password)
+
 	profileUrl := r.FormValue("profileUrl")
+
+	fmt.Println(profileUrl)
 
 	var url string
 
-	if profileUrl == "" {
+	if profileUrl == "" && file != nil {
 		newFileName := utils.GenerateFileName(handler)
 
 		url, err = utils.UploadFileToS3(h.S3Client, file, newFileName, h.BucketName, "Profile")
-	} else {
+	} else if profileUrl != "" && file != nil {
 
 		utils.UpdateFileInS3(h.S3Client, file, profileUrl, h.BucketName)
 	}
@@ -251,7 +258,18 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := h.userService.UpdateUser(userId, &bio, &url, &password, nil)
+	fmt.Println("Tes")
+
+	user, err := h.userService.UpdateUser(userId, &bio, &url, &password, nil)
+
+	fmt.Println("after")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println(user)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -299,21 +317,31 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	var input input
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = h.userService.DeleteUser(input.Id)
+	err := h.userService.DeleteUser(userId)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "RefreshToken",
+		Value:    "",
+		Expires:  time.Now().Add(-1),
+		HttpOnly: true,
+		Path:     "/",
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "AccessToken",
+		Value:    "",
+		Expires:  time.Now().Add(-1),
+		HttpOnly: true,
+		Path:     "/",
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
@@ -347,7 +375,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.ID, token.Role, token.ProfileUrl, token.Bio)
+	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.ID, token.Role, nil, nil)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to generate access token"})

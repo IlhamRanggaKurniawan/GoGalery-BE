@@ -3,6 +3,8 @@ package feedback
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -10,7 +12,7 @@ type Handler struct {
 }
 
 type input struct {
-	UserID  uint64   `json:"userId"`
+	UserID  uint64 `json:"userId"`
 	Message string `json:"message"`
 }
 
@@ -19,6 +21,8 @@ func NewHandler(feedbackService FeedbackService) Handler {
 }
 
 func (h *Handler) SendFeedback(w http.ResponseWriter, r *http.Request) {
+	userId := utils.GetPathParam(w, r, "id", "number").(uint64)
+
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -28,7 +32,7 @@ func (h *Handler) SendFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feedback, _ := h.feedbackService.SendFeedback(input.UserID, input.Message)
+	feedback, _ := h.feedbackService.SendFeedback(userId, input.Message)
 
 	w.Header().Set("Content-Type", "application/json")
 

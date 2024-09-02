@@ -49,6 +49,6 @@ func UpdateFileInS3(s3Client *s3.Client, file multipart.File, path string, bucke
 		return "", err
 	}
 
-	return fmt.Sprintf(path), nil
+	return path, nil
 
 }

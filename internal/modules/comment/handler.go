@@ -3,6 +3,8 @@ package comment
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -10,9 +12,9 @@ type Handler struct {
 }
 
 type input struct {
-	ID        uint64   `json:"id"`
-	ContentID uint64   `json:"contentId"`
-	UserID    uint64   `json:"userId"`
+	ID        uint64 `json:"id"`
+	ContentID uint64 `json:"contentId"`
+	UserID    uint64 `json:"userId"`
 	Message   string `json:"message"`
 }
 
@@ -21,6 +23,8 @@ func NewHandler(commentService CommentService) Handler {
 }
 
 func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+
 	var input input
 
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -30,7 +34,7 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.commentService.SendComment(input.UserID, input.ContentID, input.Message)
+	content, _ := h.commentService.SendComment(userId, input.ContentID, input.Message)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -41,16 +45,9 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
-	var input input
+	contentId := utils.GetPathParam(w, r, "contentId", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	content, _ := h.commentService.GetAllComments(input.ContentID)
+	content, _ := h.commentService.GetAllComments(contentId)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -81,16 +78,9 @@ func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
-	var input input
+	id := utils.GetPathParam(w, r, "id", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = h.commentService.DeleteContent(input.ID)
+	err := h.commentService.DeleteContent(id)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

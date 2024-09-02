@@ -27,7 +27,7 @@ func (r *commentRepository) Create(userId uint64, contentId uint64, text string)
 		ContentID: contentId,
 		Comment:   text,
 	}
-	err := r.db.Preload("Content").Create(&comment).Error
+	err := r.db.Create(&comment).Error
 
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (r *commentRepository) Create(userId uint64, contentId uint64, text string)
 func (r *commentRepository) FindAll(contentId uint64) (*[]entity.Comment, error) {
 	var comments []entity.Comment
 
-	err := r.db.Where("content_id = ?", contentId).Find(&comments).Error
+	err := r.db.Preload("Content").Preload("Content.Uploader").Preload("User").Where("content_id = ?", contentId).Find(&comments).Error
 
 	if err != nil {
 		return nil, err

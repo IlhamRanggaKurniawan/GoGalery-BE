@@ -12,12 +12,12 @@ var REFRESH_TOKEN_SECRET = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
 var ACCESS_TOKEN_SECRET = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
 
 type Claims struct {
-	Username   string  `json:"username"`
-	Email      string  `json:"email"`
-	ID         uint64  `json:"id"`
-	Role       string  `json:"role"`
-	ProfileUrl *string `json:"profileUrl"`
-	Bio        *string `json:"bio"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	ID         uint64 `json:"id"`
+	Role       string `json:"role"`
+	ProfileUrl string `json:"profileUrl"`
+	Bio        string `json:"bio"`
 	jwt.RegisteredClaims
 }
 
@@ -29,11 +29,19 @@ func GenerateAccessToken(username string, email string, id uint64, role string, 
 		Email:      email,
 		ID:         id,
 		Role:       role,
-		ProfileUrl: profilePicture,
-		Bio:        userBio,
+		ProfileUrl: "",
+		Bio:        "",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(Exp),
 		},
+	}
+
+	if profilePicture != nil {
+		claims.ProfileUrl = *profilePicture
+	}
+
+	if userBio != nil {
+		claims.Bio = *userBio
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -46,7 +54,7 @@ func GenerateAccessToken(username string, email string, id uint64, role string, 
 
 	return accessTokenSTR, nil
 }
-func GenerateRefreshToken(username string, email string, id uint64, role string, profileUrl *string, bio *string) (string, error) {
+func GenerateRefreshToken(username string, email string, id uint64, role string, profilePicture *string, userBio *string) (string, error) {
 
 	Exp := time.Now().Add(24 * time.Hour * 7)
 
@@ -55,11 +63,19 @@ func GenerateRefreshToken(username string, email string, id uint64, role string,
 		Email:      email,
 		ID:         id,
 		Role:       role,
-		ProfileUrl: profileUrl,
-		Bio:        bio,
+		ProfileUrl: "",
+		Bio:        "",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(Exp),
 		},
+	}
+
+	if profilePicture != nil {
+		claims.ProfileUrl = *profilePicture
+	}
+
+	if userBio != nil {
+		claims.Bio = *userBio
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

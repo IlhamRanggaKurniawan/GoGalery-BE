@@ -36,7 +36,6 @@ func (h *Handler) SendPrivateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	message, _ := h.messageService.SendMessage(input.SenderID, conversationId, 0, input.Message)
 
 	w.Header().Set("Content-Type", "application/json")

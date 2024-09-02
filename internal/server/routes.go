@@ -57,7 +57,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	directMessageRepository := directmessage.NewDirectMessageRepository(s.DB)
 	directMessageService := directmessage.NewDirectMessageService(directMessageRepository)
-	directMessageHandler := directmessage.NewHandler(directMessageService)
+	directMessageHandler := directmessage.NewHandler(directMessageService, messageRepository)
 
 	groupChatRepository := groupchat.NewGroupChatRepository(s.DB)
 	groupChatService := groupchat.NewGroupChatService(groupChatRepository)
@@ -91,8 +91,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("OPTIONS /user/update/{id}", userHandler.UpdateUser)
 	mux.HandleFunc("DELETE /user/logout/{id}", userHandler.Logout)
 	mux.HandleFunc("OPTIONS /user/logout/{id}", userHandler.Logout)
-	mux.HandleFunc("DELETE /user/delete", userHandler.DeleteUser)
-	mux.HandleFunc("OPTIONS /user/delete", userHandler.DeleteUser)
+	mux.HandleFunc("DELETE /user/delete/{userId}", userHandler.DeleteUser)
+	mux.HandleFunc("OPTIONS /user/delete/{userId}", userHandler.DeleteUser)
 
 	mux.HandleFunc("GET /token", userHandler.GetToken)
 	mux.HandleFunc("OPTIONS /token", userHandler.GetToken)
@@ -110,14 +110,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("DELETE /content/delete", contentHandler.DeleteContent)
 	mux.HandleFunc("OPTIONS /content/delete", contentHandler.DeleteContent)
 
-	mux.HandleFunc("POST /comment/send", commentHandler.SendComment)
-	mux.HandleFunc("OPTIONS /comment/send", commentHandler.SendComment)
-	mux.HandleFunc("GET /comment/findall", commentHandler.GetAllComments)
-	mux.HandleFunc("OPTIONS /comment/findall", commentHandler.GetAllComments)
+	mux.HandleFunc("POST /comment/create/{userId}", commentHandler.SendComment)
+	mux.HandleFunc("OPTIONS /comment/create/{userId}", commentHandler.SendComment)
+	mux.HandleFunc("GET /comment/findall/{contentId}", commentHandler.GetAllComments)
+	mux.HandleFunc("OPTIONS /comment/findall/{contentId}", commentHandler.GetAllComments)
 	mux.HandleFunc("PATCH /comment/update", commentHandler.UpdateComment)
 	mux.HandleFunc("OPTIONS /comment/update", commentHandler.UpdateComment)
-	mux.HandleFunc("DELETE /comment/delete", commentHandler.DeleteComment)
-	mux.HandleFunc("OPTIONS /comment/delete", commentHandler.DeleteComment)
+	mux.HandleFunc("DELETE /comment/delete/{id}", commentHandler.DeleteComment)
+	mux.HandleFunc("OPTIONS /comment/delete/{id}", commentHandler.DeleteComment)
 
 	mux.HandleFunc("POST /like/create", likeHandler.LikeContent)
 	mux.HandleFunc("OPTIONS /like/create", likeHandler.LikeContent)
@@ -137,8 +137,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("DELETE /saved/delete/{id}", saveHandler.UnsaveContent)
 	mux.HandleFunc("OPTIONS /saved/delete/{id}", saveHandler.UnsaveContent)
 
-	mux.HandleFunc("POST /feedback/create", feedbackHandler.SendFeedback)
-	mux.HandleFunc("OPTIONS /feedback/create", feedbackHandler.SendFeedback)
+	mux.HandleFunc("POST /feedback/create/{id}", feedbackHandler.SendFeedback)
+	mux.HandleFunc("OPTIONS /feedback/create/{id}", feedbackHandler.SendFeedback)
 	mux.HandleFunc("GET /feedback/findall", feedbackHandler.GetAllFeedbacks)
 	mux.HandleFunc("OPTIONS /feedback/findall", feedbackHandler.GetAllFeedbacks)
 
@@ -155,6 +155,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	mux.HandleFunc("POST /dm/create", directMessageHandler.CreateDirectMessage)
 	mux.HandleFunc("OPTIONS /dm/create", directMessageHandler.CreateDirectMessage)
+	mux.HandleFunc("/ws/dm", directMessageHandler.HandleWebSocket)
 	mux.HandleFunc("GET /dm/findall/{userId}", directMessageHandler.GetAllDirectMessages)
 	mux.HandleFunc("OPTIONS /dm/findall/{userId}", directMessageHandler.GetAllDirectMessages)
 	mux.HandleFunc("GET /dm/findone", directMessageHandler.GetOneDirectMessageByParticipants)
