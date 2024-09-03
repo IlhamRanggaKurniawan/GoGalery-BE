@@ -61,7 +61,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	groupChatRepository := groupchat.NewGroupChatRepository(s.DB)
 	groupChatService := groupchat.NewGroupChatService(groupChatRepository)
-	groupChatHandler := groupchat.NewHandler(groupChatService)
+	groupChatHandler := groupchat.NewHandler(groupChatService, messageRepository)
 
 	aIConversationRepository := aIconversation.NewAIConversationRepository(s.DB)
 	aIConversationService := aIconversation.NewAIConversationService(aIConversationRepository)
@@ -167,10 +167,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	mux.HandleFunc("POST /gc/create", groupChatHandler.CreateGroupChat)
 	mux.HandleFunc("OPTIONS /gc/create", groupChatHandler.CreateGroupChat)
-	mux.HandleFunc("GET /gc/findall", groupChatHandler.GetAllGroupChats)
-	mux.HandleFunc("OPTIONS /gc/findall", groupChatHandler.GetAllGroupChats)
-	mux.HandleFunc("GET /gc/findone", groupChatHandler.GetOneGroupChat)
-	mux.HandleFunc("OPTIONS /gc/findone", groupChatHandler.GetOneGroupChat)
+	mux.HandleFunc("/ws/gc", groupChatHandler.HandleWebSocket)
+	mux.HandleFunc("GET /gc/findall/{userId}", groupChatHandler.GetAllGroupChats)
+	mux.HandleFunc("OPTIONS /gc/findall/{userId}", groupChatHandler.GetAllGroupChats)
+	mux.HandleFunc("GET /gc/findone/{id}", groupChatHandler.GetOneGroupChat)
+	mux.HandleFunc("OPTIONS /gc/findone/{id}", groupChatHandler.GetOneGroupChat)
 	mux.HandleFunc("PATCH /gc/update", groupChatHandler.UpdateGroupChat)
 	mux.HandleFunc("OPTIONS /gc/update", groupChatHandler.UpdateGroupChat)
 	mux.HandleFunc("DELETE /gc/delete", groupChatHandler.DeleteGroupChat)

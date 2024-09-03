@@ -35,7 +35,13 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins (use with caution)
+		origin := r.Header.Get("Origin")
+
+		if origin == "http://localhost:3000" {
+			return true
+		} else {
+			return false
+		}
 	},
 }
 
@@ -52,11 +58,10 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	dmID := utils.GetOneQueryParam(w, r, "dmId", "number").(uint64)
 	userID := utils.GetOneQueryParam(w, r, "userId", "number").(uint64)
 
-	// Periksa apakah koneksi sudah ada untuk userID dan dmID
 	existingConnections := connections[dmID]
 	for _, existingConn := range existingConnections {
 		if existingConn.UserID == userID {
-			existingConn.Conn.Close()  // Tutup koneksi lama
+			existingConn.Conn.Close() // Tutup koneksi lama
 			connections[dmID] = removeConnection(dmID, existingConn)
 			break
 		}
@@ -78,7 +83,6 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 		newMessage, err := h.messageRepository.Create(userID, dmID, 0, string(message))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
