@@ -3,6 +3,7 @@ package fetchAPI
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,10 +15,10 @@ type Message struct {
 }
 
 type Choice struct {
-	Index        int     `json:"index"`
+	Index        int      `json:"index"`
 	Message      Message `json:"message"`
-	Logprobs     *string `json:"logprobs"`
-	FinishReason string  `json:"finish_reason"`
+	Logprobs     *string  `json:"logprobs"`
+	FinishReason string   `json:"finish_reason"`
 }
 
 type Usage struct {
@@ -37,39 +38,42 @@ type OpenAIResponse struct {
 }
 
 type RequestBody struct {
-	Model      string    `json:"model"`
+	Model      string     `json:"model"`
 	Messages   []Message `json:"messages"`
-	Max_tokens uint      `json:"max_tokens"`
+	Max_tokens uint64       `json:"max_tokens"`
 }
 
-func FetchOpenAI(message string, responseChan chan OpenAIResponse, errorChan chan error) {
+func FetchOpenAI(prompt []Message) (OpenAIResponse, error) {
 
 	requestBody := RequestBody{
-		Model: "gpt-3.5-turbo-0125",
-		Messages: []Message{
-			{Role: "system", Content: "You are a helpful assistant"},
-			{Role: "user", Content: message},
-		},
-		Max_tokens: 350,
+		Model:    "gpt-4o-mini-2024-07-18",
+		Messages: prompt,
+		Max_tokens: 1000,
 	}
 
-	jsonData, _ := json.Marshal(requestBody)
+	jsonData, err := json.Marshal(requestBody)
+
+	if err != nil {
+		fmt.Println(err)
+		return OpenAIResponse{}, err
+	}
 
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(jsonData))
 
 	if err != nil {
-		errorChan <- err
-		return
+		fmt.Println(err)
+		return OpenAIResponse{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+ os.Getenv("OPENAI_KEY"))
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("OPENAI_KEY"))
 
 	client := &http.Client{}
 	response, err := client.Do(req)
+
 	if err != nil {
-		errorChan <- err
-		return
+		fmt.Println(err)
+		return OpenAIResponse{}, err
 	}
 
 	defer response.Body.Close()
@@ -77,8 +81,8 @@ func FetchOpenAI(message string, responseChan chan OpenAIResponse, errorChan cha
 	body, err := io.ReadAll(response.Body)
 
 	if err != nil {
-		errorChan <- err
-		return
+		fmt.Println(err)
+		return OpenAIResponse{}, err
 	}
 
 	var openAIResponse OpenAIResponse
@@ -86,9 +90,9 @@ func FetchOpenAI(message string, responseChan chan OpenAIResponse, errorChan cha
 	err = json.Unmarshal(body, &openAIResponse)
 
 	if err != nil {
-		errorChan <- err
-		return
+		fmt.Println(err)
+		return OpenAIResponse{}, err
 	}
 
-	responseChan <- openAIResponse
+	return openAIResponse, nil
 }

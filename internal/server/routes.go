@@ -85,6 +85,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("OPTIONS /user/login", userHandler.Login)
 	mux.HandleFunc("GET /user/findall/{username}", userHandler.FindAllUsers)
 	mux.HandleFunc("OPTIONS /user/findall/{username}", userHandler.FindAllUsers)
+	mux.HandleFunc("GET /user/mutual/{userId}", userHandler.FindAllMutualUsers)
+	mux.HandleFunc("OPTIONS /user/mutual/{userId}", userHandler.FindAllMutualUsers)
 	mux.HandleFunc("GET /user/findone/{username}", userHandler.FindUser)
 	mux.HandleFunc("OPTIONS /user/findone/{username}", userHandler.FindUser)
 	mux.HandleFunc("PATCH /user/update/{id}", userHandler.UpdateUser)
@@ -167,6 +169,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	mux.HandleFunc("POST /gc/create", groupChatHandler.CreateGroupChat)
 	mux.HandleFunc("OPTIONS /gc/create", groupChatHandler.CreateGroupChat)
+	mux.HandleFunc("POST /gc/members/{groupId}", groupChatHandler.AddMembers)
+	mux.HandleFunc("OPTIONS /gc/members/{groupId}", groupChatHandler.AddMembers)
 	mux.HandleFunc("/ws/gc", groupChatHandler.HandleWebSocket)
 	mux.HandleFunc("GET /gc/findall/{userId}", groupChatHandler.GetAllGroupChats)
 	mux.HandleFunc("OPTIONS /gc/findall/{userId}", groupChatHandler.GetAllGroupChats)
@@ -174,6 +178,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("OPTIONS /gc/findone/{id}", groupChatHandler.GetOneGroupChat)
 	mux.HandleFunc("PATCH /gc/update", groupChatHandler.UpdateGroupChat)
 	mux.HandleFunc("OPTIONS /gc/update", groupChatHandler.UpdateGroupChat)
+	mux.HandleFunc("DELETE /gc/{groupId}/members/{userId}", groupChatHandler.LeaveGroupChat)
+	mux.HandleFunc("OPTIONS /gc/{groupId}/members/{userId}", groupChatHandler.LeaveGroupChat)
 	mux.HandleFunc("DELETE /gc/delete", groupChatHandler.DeleteGroupChat)
 	mux.HandleFunc("OPTIONS /gc/delete", groupChatHandler.DeleteGroupChat)
 
@@ -188,8 +194,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("OPTIONS /ai/message/create", aiMessageHandler.SendMessage)
 	mux.HandleFunc("GET /ai/message/findall", aiMessageHandler.GetAllMessages)
 	mux.HandleFunc("OPTIONS /ai/message/findall", aiMessageHandler.GetAllMessages)
-	mux.HandleFunc("PATCH /ai/message/update", aiMessageHandler.UpdateMessage)
-	mux.HandleFunc("OPTIONS /ai/message/update", aiMessageHandler.UpdateMessage)
+	// mux.HandleFunc("PATCH /ai/message/update", aiMessageHandler.UpdateMessage)
+	// mux.HandleFunc("OPTIONS /ai/message/update", aiMessageHandler.UpdateMessage)
 	mux.HandleFunc("DELETE /ai/message/delete", aiMessageHandler.DeleteMessage)
 	mux.HandleFunc("OPTIONS /ai/message/delete", aiMessageHandler.DeleteMessage)
 

@@ -8,6 +8,7 @@ import (
 
 type UserRepository interface {
 	Create(username string, email string, password string) (*entity.User, error)
+	FindAllMutualUsers(userID uint64) (*[]entity.User, error)
 	FindAll(username string) (*[]entity.User, error)
 	FindOne(username string) (*entity.User, error)
 	FindOneByToken(token string) (*entity.User, error)
@@ -37,6 +38,19 @@ func (r *userRepository) Create(username string, email string, password string) 
 	}
 
 	return &user, nil
+}
+
+func (r *userRepository) FindAllMutualUsers(userID uint64) (*[]entity.User, error) {
+	var users []entity.User
+
+	err := r.db.Table("users").
+		Select("users.*").
+		Joins("JOIN follows f1 ON f1.follower_id = users.id").
+		Joins("JOIN follows f2 ON f2.following_id = users.id AND f2.follower_id = ?", userID).
+		Where("f1.following_id = ?", userID).
+		Scan(&users).Error
+
+	return &users, err
 }
 
 func (r *userRepository) FindAll(username string) (*[]entity.User, error) {

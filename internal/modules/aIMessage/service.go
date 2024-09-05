@@ -7,7 +7,7 @@ import (
 )
 
 type AIMessageService interface {
-	SendMessage(senderId uint64, conversationID uint64, message string) (*entity.AIMessage, error)
+	SendMessage(senderId uint64, conversationID uint64, prompt []fetchapi.Message) (*entity.AIMessage, error)
 	GetAllMessages(conversationID uint64) (*[]entity.AIMessage, error)
 	UpdateMessage(id uint64, message string) (*entity.AIMessage, error)
 	DeleteMessage(id uint64) error
@@ -23,25 +23,19 @@ func NewAIMessageService(aIMessageRepository AIMessageRepository) AIMessageServi
 	}
 }
 
-func (s *aIMessageService) SendMessage(senderId uint64, conversationID uint64, message string) (*entity.AIMessage, error) {
+func (s *aIMessageService) SendMessage(senderId uint64, conversationID uint64, prompt []fetchapi.Message) (*entity.AIMessage, error) {
 
-	responseChan := make(chan fetchapi.OpenAIResponse)
-	errorChan := make(chan error)
+	response, err := fetchapi.FetchOpenAI(prompt)
 
-	go fetchapi.FetchOpenAI(message, responseChan, errorChan)
-
-	select {
-
-	case openAIResponse := <-responseChan:
-		aIMessage, err := s.aIMessageRepository.Create(senderId, conversationID, message, openAIResponse.Choices[0].Message.Content)
-		if err != nil {
-			return nil, err
-		}
-		return aIMessage, nil
-
-	case err := <-errorChan:
+	if err != nil {
 		return nil, err
 	}
+
+	aIMessage, err := s.aIMessageRepository.Create(senderId, conversationID, prompt[len(prompt)-1].Content, response.Choices[0].Message.Content)
+	if err != nil {
+		return nil, err
+	}
+	return aIMessage, nil
 }
 
 func (s *aIMessageService) GetAllMessages(conversationID uint64) (*[]entity.AIMessage, error) {

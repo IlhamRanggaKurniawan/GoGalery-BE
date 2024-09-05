@@ -7,9 +7,11 @@ import (
 
 type GroupChatRepository interface {
 	Create(name string, members []entity.User) (*entity.GroupChat, error)
+	AddMembers(groupChatID uint64, newMembers []entity.User) (*entity.GroupChat, error)
 	FindAll(userId uint64) (*[]entity.GroupChat, error)
 	FindOne(id uint64) (*entity.GroupChat, error)
 	Update(id uint64, pictureUrl string) (*entity.GroupChat, error)
+	LeaveGroup(userId uint64, groupId uint64) error
 	DeleteOne(id uint64) error
 }
 
@@ -36,6 +38,35 @@ func (r *groupChatRepository) Create(name string, participants []entity.User) (*
 	return &groupChat, nil
 }
 
+func (r *groupChatRepository) AddMembers(groupChatID uint64, newMembers []entity.User) (*entity.GroupChat, error) {
+	var groupChat entity.GroupChat
+
+	err := r.db.Preload("Members").Where("id = ?", groupChatID).Take(&groupChat).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	existingMembers := make(map[uint64]bool)
+	for _, member := range groupChat.Members {
+		existingMembers[member.ID] = true
+	}
+
+	for _, newMember := range newMembers {
+		if !existingMembers[newMember.ID] {
+			groupChat.Members = append(groupChat.Members, newMember)
+		}
+	}
+
+	err = r.db.Save(&groupChat).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &groupChat, nil
+}
+
 func (r *groupChatRepository) FindAll(userId uint64) (*[]entity.GroupChat, error) {
 
 	var groupChats []entity.GroupChat
@@ -45,7 +76,6 @@ func (r *groupChatRepository) FindAll(userId uint64) (*[]entity.GroupChat, error
 		Where("users.id = ?", userId).
 		Preload("Members").
 		Find(&groupChats).Error
-
 
 	if err != nil {
 		return nil, err
@@ -79,6 +109,25 @@ func (r *groupChatRepository) Update(id uint64, pictureUrl string) (*entity.Grou
 	r.db.Save(&groupChat)
 
 	return groupChat, nil
+}
+
+func (r *groupChatRepository) LeaveGroup(userId uint64, groupId uint64) error {
+
+	var groupChat entity.GroupChat
+
+	err := r.db.First(&groupChat, groupId).Error
+
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Model(&groupChat).Association("Members").Delete(&entity.User{ID: userId})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *groupChatRepository) DeleteOne(id uint64) error {

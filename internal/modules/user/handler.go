@@ -292,6 +292,19 @@ func (h *Handler) FindAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) FindAllMutualUsers(w http.ResponseWriter, r *http.Request) {
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+
+	users, _ := h.userService.FindAllMutualUsers(userId)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
 
 	username := utils.GetPathParam(w, r, "username", "string").(string)

@@ -4,9 +4,11 @@ import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity
 
 type GroupChatService interface {
 	CreateGroupChat(name string, members []entity.User) (*entity.GroupChat, error)
+	AddMembers(groupId uint64, members []entity.User) (*entity.GroupChat, error)
 	GetAllGroupChats(userId uint64) (*[]entity.GroupChat, error)
 	GetOneGroupChat(id uint64) (*entity.GroupChat, error)
 	UpdateGroupChat(id uint64, pictureUrl string) (*entity.GroupChat, error)
+	LeaveGroupChat(userId uint64, groupId uint64) error
 	DeleteGroupChat(id uint64) error
 }
 
@@ -20,9 +22,20 @@ func NewGroupChatService(groupChatRepository GroupChatRepository) GroupChatServi
 	}
 }
 
-func (s *groupChatService) CreateGroupChat(name string,members []entity.User) (*entity.GroupChat, error) {
+func (s *groupChatService) CreateGroupChat(name string, members []entity.User) (*entity.GroupChat, error) {
 
-	groupChat, err := s.groupChatRepository.Create(name,members)
+	groupChat, err := s.groupChatRepository.Create(name, members)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return groupChat, nil
+}
+
+func (s *groupChatService) AddMembers(groupId uint64, members []entity.User) (*entity.GroupChat, error) {
+
+	groupChat, err := s.groupChatRepository.AddMembers(groupId, members)
 
 	if err != nil {
 		return nil, err
@@ -62,6 +75,13 @@ func (s *groupChatService) UpdateGroupChat(id uint64, pictureUrl string) (*entit
 	}
 
 	return directMessage, nil
+}
+
+func (s *groupChatService) LeaveGroupChat(userId uint64, groupId uint64) error {
+
+	err := s.groupChatRepository.LeaveGroup(userId, groupId)
+
+	return err
 }
 
 func (s *groupChatService) DeleteGroupChat(id uint64) error {

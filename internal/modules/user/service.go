@@ -10,6 +10,7 @@ type UserService interface {
 	Login(username string, password string) (*entity.User, error)
 	UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
 	FindAllUsers(username string) (*[]entity.User, error)
+	FindAllMutualUsers(userId uint64) (*[]entity.User, error)
 	FindOneUser(username string) (*entity.User, error)
 	DeleteUser(id uint64) error
 }
@@ -68,6 +69,17 @@ func (s *userService) UpdateUser(id uint64, bio *string, profileUrl *string, pas
 func (s *userService) FindAllUsers(username string) (*[]entity.User, error) {
 
 	users, err := s.userRepository.FindAll(username)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (s *userService) FindAllMutualUsers(userId uint64) (*[]entity.User, error) {
+
+	users, err := s.userRepository.FindAllMutualUsers(userId)
 
 	if err != nil {
 		return nil, err

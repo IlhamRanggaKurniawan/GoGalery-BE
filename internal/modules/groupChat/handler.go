@@ -123,11 +123,33 @@ func (h *Handler) CreateGroupChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feedback, _ := h.groupChatService.CreateGroupChat(input.Name, input.Members)
+	group, _ := h.groupChatService.CreateGroupChat(input.Name, input.Members)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(feedback); err != nil {
+	if err := json.NewEncoder(w).Encode(group); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) AddMembers(w http.ResponseWriter, r *http.Request) {
+	groupId := utils.GetPathParam(w, r, "groupId", "number").(uint64)
+
+	var input input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	group, _ := h.groupChatService.AddMembers(groupId, input.Members)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(group); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -179,6 +201,31 @@ func (h *Handler) UpdateGroupChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) LeaveGroupChat(w http.ResponseWriter, r *http.Request) {
+
+	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+	groupId := utils.GetPathParam(w, r, "groupId", "number").(uint64)
+
+	err := h.groupChatService.LeaveGroupChat(userId, groupId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	resp := struct {
+		Message string `json:"message"`
+	}{
+		Message: "request success",
+	}
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
 func (h *Handler) DeleteGroupChat(w http.ResponseWriter, r *http.Request) {
 	var input input
 
