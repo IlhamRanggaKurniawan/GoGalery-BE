@@ -6,10 +6,8 @@ type AIMessage struct {
 	ID             uint64 `gorm:"primaryKey;autoIncrement"`
 	Message        string
 	Response       *string
-	SenderID       uint64
-	ConversationID uint64
-	CreatedAt      time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt      time.Time      `gorm:"autoUpdateTime"`
+	SenderID       uint64    `gorm:"index"`
+	ConversationID uint64    `gorm:"index"`
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
 }
-
-

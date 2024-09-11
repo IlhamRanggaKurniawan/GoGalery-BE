@@ -103,16 +103,9 @@ func (h *Handler) CheckFollowing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
-	var input input
+	id := utils.GetPathParam(w,r, "id", "number").(uint64)
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = h.followService.UnfollowUser(input.ID)
+	err := h.followService.UnfollowUser(id)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

@@ -205,8 +205,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("OPTIONS /follow/findall", followHandler.GetAllFollows)
 	mux.HandleFunc("GET /follow/findone", followHandler.CheckFollowing)
 	mux.HandleFunc("OPTIONS /follow/findone", followHandler.CheckFollowing)
-	mux.HandleFunc("DELETE /follow/delete", followHandler.UnfollowUser)
-	mux.HandleFunc("OPTIONS /follow/delete", followHandler.UnfollowUser)
+	mux.HandleFunc("DELETE /follow/delete/{id}", followHandler.UnfollowUser)
+	mux.HandleFunc("OPTIONS /follow/delete/{id}", followHandler.UnfollowUser)
 
 	mux.HandleFunc("POST /notification/create", notificationHandler.CreateNotification)
 	mux.HandleFunc("OPTIONS /notification/create", notificationHandler.CreateNotification)

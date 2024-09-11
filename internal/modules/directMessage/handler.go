@@ -174,13 +174,10 @@ func (h *Handler) GetOneDirectMessageByParticipants(w http.ResponseWriter, r *ht
 
 	participants := []uint64{participant1Id, participant2Id}
 
-	directMessage, err := h.directMessageService.GetOneDirectMessageByParticipants(participants)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	directMessage, _ := h.directMessageService.GetOneDirectMessageByParticipants(participants)
 
 	w.Header().Set("Content-Type", "application/json")
+	
 	if err := json.NewEncoder(w).Encode(directMessage); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
