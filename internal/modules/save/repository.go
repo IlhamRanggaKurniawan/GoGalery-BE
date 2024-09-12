@@ -7,8 +7,8 @@ import (
 
 type SaveContentRepository interface {
 	Create(userId uint64, contentId uint64) (*entity.SaveContent, error)
-	FindAll(userId uint64) (*[]entity.SaveContent, error)
-	FindOne(userId uint64, contentId uint64) (*entity.SaveContent, error)
+	FindAllById(userId uint64) (*[]entity.SaveContent, error)
+	FindOneById(userId uint64, contentId uint64) (*entity.SaveContent, error)
 	DeleteOne(id uint64) error
 }
 
@@ -35,7 +35,7 @@ func (r *saveContentRepository) Create(userId uint64, contentId uint64) (*entity
 	return &save, nil
 }
 
-func (r *saveContentRepository) FindAll(userId uint64) (*[]entity.SaveContent, error) {
+func (r *saveContentRepository) FindAllById(userId uint64) (*[]entity.SaveContent, error) {
 	var saves []entity.SaveContent
 
 	err := r.db.Where("user_id = ?", userId).Preload("Content").Preload("Content.Uploader").Find(&saves).Error
@@ -47,7 +47,7 @@ func (r *saveContentRepository) FindAll(userId uint64) (*[]entity.SaveContent, e
 	return &saves, nil
 }
 
-func (r *saveContentRepository) FindOne(userId uint64, contentId uint64) (*entity.SaveContent, error) {
+func (r *saveContentRepository) FindOneById(userId uint64, contentId uint64) (*entity.SaveContent, error) {
 	var save entity.SaveContent
 
 	err := r.db.Where("user_id = ? AND content_id = ?", userId, contentId).Take(&save).Error

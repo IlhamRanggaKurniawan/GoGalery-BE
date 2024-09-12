@@ -1,15 +1,16 @@
 package utils
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 )
 
-func GetPathParam(w http.ResponseWriter, r *http.Request, paramsName string, paramsType string) interface{} {
-	paramStr := r.PathValue(paramsName)
+func GetPathParam(r *http.Request, paramName string, paramsType string, errPointer *error) interface{} {
+	paramStr := r.PathValue(paramName)
 
 	if paramStr == "" {
-		http.Error(w, "parameter is empty", http.StatusBadRequest)
+		*errPointer = fmt.Errorf("parameter '%s' is empty", paramName)
 		return nil
 	}
 
@@ -19,54 +20,23 @@ func GetPathParam(w http.ResponseWriter, r *http.Request, paramsName string, par
 	case "number":
 		paramNum, err := strconv.ParseUint(paramStr, 10, 64)
 		if err != nil {
-			http.Error(w, "Invalid number parameter", http.StatusBadRequest)
+			*errPointer = fmt.Errorf("invalid number parameter for '%s'", paramName)
 			return nil
 		}
 		return paramNum
 	default:
-		http.Error(w, "Invalid parameter type", http.StatusBadRequest)
+		*errPointer = fmt.Errorf("invalid number parameter for '%s'", paramName)
 		return nil
 	}
 }
 
-func GetMultipleQueryParams(w http.ResponseWriter, r *http.Request, params map[string]string) map[string]interface{} {
-	results := make(map[string]interface{})
-	queryValues := r.URL.Query()
-
-	for paramName, paramType := range params {
-		paramStr := queryValues.Get(paramName)
-
-		if paramStr == "" {
-			http.Error(w, "Query parameter '"+paramName+"' is empty", http.StatusBadRequest)
-			return nil
-		}
-
-		switch paramType {
-		case "string":
-			results[paramName] = paramStr
-		case "number":
-			paramNum, err := strconv.ParseUint(paramStr, 10, 64)
-			if err != nil {
-				http.Error(w, "Invalid number parameter for '"+paramName+"'", http.StatusBadRequest)
-				return nil
-			}
-			results[paramName] = paramNum
-		default:
-			http.Error(w, "Invalid parameter type for '"+paramName+"'", http.StatusBadRequest)
-			return nil
-		}
-	}
-
-	return results
-}
-
-func GetOneQueryParam(w http.ResponseWriter, r *http.Request, paramName string, paramType string) interface{} {
+func GetQueryParam(r *http.Request, paramName string, paramType string, errPointer *error) interface{} {
 	queryValues := r.URL.Query()
 
 	paramStr := queryValues.Get(paramName)
 
 	if paramStr == "" {
-		http.Error(w, "Query parameter '"+paramName+"' is empty", http.StatusBadRequest)
+		*errPointer = fmt.Errorf("query parameter '%s' is empty", paramName)
 		return nil
 	}
 
@@ -75,16 +45,13 @@ func GetOneQueryParam(w http.ResponseWriter, r *http.Request, paramName string, 
 		return paramStr
 	case "number":
 		paramNum, err := strconv.ParseUint(paramStr, 10, 64)
-
 		if err != nil {
-			http.Error(w, "Invalid number parameter for '"+paramName+"'", http.StatusBadRequest)
+			*errPointer = fmt.Errorf("invalid number parameter for '%s'", paramName)
 			return nil
 		}
-
 		return paramNum
 	default:
-		http.Error(w, "Invalid parameter type for '"+paramName+"'", http.StatusBadRequest)
+		*errPointer = fmt.Errorf("invalid parameter type for '%s'", paramName)
 		return nil
 	}
-
 }

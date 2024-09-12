@@ -9,9 +9,9 @@ type UserService interface {
 	Register(username string, email string, password string) (*entity.User, error)
 	Login(username string, password string) (*entity.User, error)
 	UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
-	FindAllUsers(username string) (*[]entity.User, error)
+	FindAllUsersByUsername(username string) (*[]entity.User, error)
 	FindAllMutualUsers(userId uint64) (*[]entity.User, error)
-	FindOneUser(username string) (*entity.User, error)
+	FindOneUserByUsername(username string) (*entity.User, error)
 	DeleteUser(id uint64) error
 }
 
@@ -40,7 +40,7 @@ func (s *userService) Register(username string, email string, password string) (
 
 func (s *userService) Login(username string, password string) (*entity.User, error) {
 
-	user, err := s.userRepository.FindOne(username)
+	user, err := s.userRepository.FindOneByUsername(username)
 
 	if err != nil {
 		return nil, err
@@ -57,7 +57,31 @@ func (s *userService) Login(username string, password string) (*entity.User, err
 
 func (s *userService) UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
 
-	user, err := s.userRepository.Update(id, bio, profileUrl, password, token)
+	user, err := s.userRepository.FindOneById(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if bio != nil {
+		user.Bio = bio
+	}
+
+	if profileUrl != nil {
+		user.ProfileUrl = profileUrl
+	}
+
+	if token != nil {
+		user.Token = token
+	}
+
+	if password != nil {
+		hashedPassword, _ := utils.HashPassword(*password)
+
+		user.Password = *hashedPassword
+	}
+
+	user, err = s.userRepository.Update(user)
 
 	if err != nil {
 		return nil, err
@@ -66,9 +90,9 @@ func (s *userService) UpdateUser(id uint64, bio *string, profileUrl *string, pas
 	return user, nil
 }
 
-func (s *userService) FindAllUsers(username string) (*[]entity.User, error) {
+func (s *userService) FindAllUsersByUsername(username string) (*[]entity.User, error) {
 
-	users, err := s.userRepository.FindAll(username)
+	users, err := s.userRepository.FindAllByUsername(username)
 
 	if err != nil {
 		return nil, err
@@ -88,9 +112,9 @@ func (s *userService) FindAllMutualUsers(userId uint64) (*[]entity.User, error) 
 	return users, nil
 }
 
-func (s *userService) FindOneUser(username string) (*entity.User, error) {
+func (s *userService) FindOneUserByUsername(username string) (*entity.User, error) {
 
-	user, err := s.userRepository.FindOne(username)
+	user, err := s.userRepository.FindOneByUsername(username)
 
 	if err != nil {
 		return nil, err

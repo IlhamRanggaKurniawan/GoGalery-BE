@@ -2,17 +2,16 @@ package user
 
 import (
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
-	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 	"gorm.io/gorm"
 )
 
 type UserRepository interface {
 	Create(username string, email string, password string) (*entity.User, error)
 	FindAllMutualUsers(userID uint64) (*[]entity.User, error)
-	FindAll(username string) (*[]entity.User, error)
-	FindOne(username string) (*entity.User, error)
-	FindOneByToken(token string) (*entity.User, error)
-	Update(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
+	FindAllByUsername(username string) (*[]entity.User, error)
+	FindOneByUsername(username string) (*entity.User, error)
+	FindOneById(id uint64) (*entity.User, error)
+	Update(user *entity.User) (*entity.User, error)
 	DeleteOne(id uint64) error
 }
 
@@ -53,7 +52,7 @@ func (r *userRepository) FindAllMutualUsers(userID uint64) (*[]entity.User, erro
 	return &users, err
 }
 
-func (r *userRepository) FindAll(username string) (*[]entity.User, error) {
+func (r *userRepository) FindAllByUsername(username string) (*[]entity.User, error) {
 	var users []entity.User
 
 	err := r.db.Where("username LIKE ?", "%"+username+"%").Find(&users).Error
@@ -61,7 +60,7 @@ func (r *userRepository) FindAll(username string) (*[]entity.User, error) {
 	return &users, err
 }
 
-func (r *userRepository) FindOne(username string) (*entity.User, error) {
+func (r *userRepository) FindOneByUsername(username string) (*entity.User, error) {
 	var user entity.User
 
 	err := r.db.Where("username = ?", username).Preload("Contents").Take(&user).Error
@@ -85,43 +84,7 @@ func (r *userRepository) FindOneById(id uint64) (*entity.User, error) {
 	return &user, nil
 }
 
-func (r *userRepository) FindOneByToken(token string) (*entity.User, error) {
-	var user entity.User
-
-	err := r.db.Where("token = ?", token).Take(&user).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
-}
-
-func (r *userRepository) Update(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
-
-	user, err := r.FindOneById(id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if bio != nil {
-		user.Bio = bio
-	}
-
-	if profileUrl != nil {
-		user.ProfileUrl = profileUrl
-	}
-
-	if token != nil {
-		user.Token = token
-	}
-
-	if password != nil {
-		hashedPassword, _ := utils.HashPassword(*password)
-
-		user.Password = *hashedPassword
-	}
+func (r *userRepository) Update(user *entity.User) (*entity.User, error) {
 
 	r.db.Save(&user)
 

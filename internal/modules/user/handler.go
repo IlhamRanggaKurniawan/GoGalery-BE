@@ -18,7 +18,6 @@ type Handler struct {
 }
 
 type input struct {
-	Id              uint64 `json:"id"`
 	Username        string `json:"username"`
 	Email           string `json:"email"`
 	Password        string `json:"password"`
@@ -47,28 +46,33 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
 	if input.Password != input.ConfirmPassword {
-		http.Error(w, "Password doen't match", http.StatusBadRequest)
+		utils.ErrorResponse(w, fmt.Errorf("password doesn't match"), http.StatusBadRequest)
 		return
 	}
 
-	user, _ := h.userService.Register(input.Username, input.Email, input.Password)
+	user, err := h.userService.Register(input.Username, input.Email, input.Password)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -91,21 +95,16 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	user, err = h.userService.UpdateUser(user.ID, nil, nil, nil, &refreshToken)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	res := authenticationRes{
 		User:        *user,
 		AccessToken: accessToken,
 	}
 
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, res)
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
@@ -115,27 +114,28 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
 	user, err := h.userService.Login(input.Username, input.Password)
 
 	if err != nil {
-		http.Error(w, "Invalid username or password", http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
 	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
-		http.Error(w, "Failed to generate access token", http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
+
 	if err != nil {
-		http.Error(w, "Failed to generate refresh token", http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -156,26 +156,28 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	user, err = h.userService.UpdateUser(user.ID, nil, nil, nil, &refreshToken)
+
 	if err != nil {
-		http.Error(w, "Failed to update user with refresh token", http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	res := authenticationRes{
 		User:        *user,
 		AccessToken: accessToken,
 	}
 
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	utils.SuccessResponse(w, res)
+}
+func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	id := utils.GetPathParam(r, "id", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
-}
-
-func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w, r, "id", "number").(uint64)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "RefreshToken",
@@ -195,14 +197,12 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	token := ""
 
-	_, err := h.userService.UpdateUser(id, nil, nil, nil, &token)
+	_, err = h.userService.UpdateUser(id, nil, nil, nil, &token)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	resp := struct {
 		Message string `json:"message"`
@@ -210,23 +210,27 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
+
+	userId := utils.GetPathParam(r, "id", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	const maxUploadSize = 10 << 20
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
 
-	err := r.ParseMultipartForm(maxUploadSize)
+	err = r.ParseMultipartForm(maxUploadSize)
 
 	if err != nil {
-		http.Error(w, "Maximum file size is 15MB", http.StatusBadRequest)
+		utils.ErrorResponse(w, fmt.Errorf("maximum file size is 15MB"), http.StatusBadRequest)
 		return
 	}
 
@@ -236,11 +240,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	password := r.FormValue("password")
 
-	fmt.Println(password)
-
 	profileUrl := r.FormValue("profileUrl")
-
-	fmt.Println(profileUrl)
 
 	var url string
 
@@ -254,89 +254,95 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println("Tes")
 
 	user, err := h.userService.UpdateUser(userId, &bio, &url, &password, nil)
 
-	fmt.Println("after")
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
+
 	}
 
-	fmt.Println(user)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, user)
 }
 
 func (h *Handler) FindAllUsers(w http.ResponseWriter, r *http.Request) {
-	username := utils.GetPathParam(w, r, "username", "string").(string)
+	var err error
 
-	users, _ := h.userService.FindAllUsers(username)
+	username := utils.GetPathParam(r, "username", "string", &err).(string)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(users); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	users, err := h.userService.FindAllUsersByUsername(username)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, users)
 }
 
 func (h *Handler) FindAllMutualUsers(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+	var err error
 
-	users, _ := h.userService.FindAllMutualUsers(userId)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(users); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	users, err := h.userService.FindAllMutualUsers(userId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, users)
 }
 
 func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
+	var err error
 
-	username := utils.GetPathParam(w, r, "username", "string").(string)
-
-	if username == "" {
-		http.Error(w, "params is empty", http.StatusBadRequest)
-		return
-	}
-
-	user, err := h.userService.FindOneUser(username)
+	username := utils.GetPathParam(r, "username", "string", &err).(string)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	user, err := h.userService.FindOneUserByUsername(username)
 
-	if err := json.NewEncoder(w).Encode(user); err != nil {
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, user)
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	var err error
 
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
-
-	err := h.userService.DeleteUser(userId)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = h.userService.DeleteUser(userId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -356,42 +362,35 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }
 
 func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
-
 	cookie, err := r.Cookie("RefreshToken")
 
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Refresh token not found"})
+		utils.ErrorResponse(w, err, http.StatusUnauthorized)
 		return
 	}
 
 	token, err := utils.ValidateToken(cookie.Value, "Refresh Token")
+
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid refresh token"})
+		utils.ErrorResponse(w, err, http.StatusUnauthorized)
 		return
 	}
 
 	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.ID, token.Role, nil, nil)
+
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to generate access token"})
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -409,9 +408,5 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		AccessToken: accessToken,
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

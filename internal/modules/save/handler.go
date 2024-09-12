@@ -11,7 +11,6 @@ type Handler struct {
 }
 
 type input struct {
-	ID        uint64 `json:"id"`
 	UserID    uint64 `json:"userId"`
 	ContentID uint64 `json:"contentId"`
 }
@@ -26,87 +25,89 @@ func (h *Handler) SaveContent(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	like, _ := h.saveContentService.SaveContent(input.UserID, input.ContentID)
+	like, err := h.saveContentService.SaveContent(input.UserID, input.ContentID)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(like); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, like)
 }
 
 func (h *Handler) GetAllSaves(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+	var err error
 
-	contents, _ := h.saveContentService.GetAllSaves(userId)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(contents); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	contents, err := h.saveContentService.GetAllSaves(userId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, contents)
 }
 
 func (h *Handler) GetOneSave(w http.ResponseWriter, r *http.Request) {
-	params := map[string]string{
-		"userId":    "number",
-		"contentId": "number",
-	}
+	var err error
 
-	results := utils.GetMultipleQueryParams(w, r, params)
+	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
 
-	userId, ok := results["userId"].(uint64)
-	if !ok {
-		http.Error(w, "Invalid type for 'userId'", http.StatusBadRequest)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	contentId, ok := results["contentId"].(uint64)
-	if !ok {
-		http.Error(w, "Invalid type for 'contentId'", http.StatusBadRequest)
+	contentId := utils.GetQueryParam(r, "contentId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	likes, _ := h.saveContentService.GetOneSave(userId, contentId)
+	content, err := h.saveContentService.GetOneSave(userId, contentId)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(likes); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, content)
 }
 
 func (h *Handler) UnsaveContent(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
 
-	if id == 0 {
-		http.Error(w, "params is empty", http.StatusBadRequest)
-		return
-	}
-
-	err := h.saveContentService.UnsaveContent(id)
+	id := utils.GetPathParam(r, "id", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	err = h.saveContentService.UnsaveContent(id)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

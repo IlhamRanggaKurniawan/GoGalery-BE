@@ -32,7 +32,7 @@ func (s *saveContentService) SaveContent(userId uint64, contentId uint64) (*enti
 
 func (s *saveContentService) GetAllSaves(userId uint64) (*[]entity.SaveContent, error) {
 
-	saves, err := s.saveContentRepository.FindAll(userId)
+	saves, err := s.saveContentRepository.FindAllById(userId)
 
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (s *saveContentService) GetAllSaves(userId uint64) (*[]entity.SaveContent, 
 
 func (s *saveContentService) GetOneSave(userId uint64, contentId uint64) (*entity.SaveContent, error) {
 
-	save, err := s.saveContentRepository.FindOne(userId, contentId)
+	save, err := s.saveContentRepository.FindOneById(userId, contentId)
 
 	if err != nil {
 		return nil, err
