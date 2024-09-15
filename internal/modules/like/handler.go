@@ -22,99 +22,83 @@ func NewHandler(likeContentService LikeContentService) Handler {
 }
 
 func (h *Handler) LikeContent(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	like, _ := h.likeContentService.LikeContent(input.UserID, input.ContentID)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(like); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *Handler) GetAllLikes(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	likes, _ := h.likeContentService.GetAllLikes(input.ContentID)
+	var input input
 
-	w.Header().Set("Content-Type", "application/json")
+	err = json.NewDecoder(r.Body).Decode(&input)
 
-	if err := json.NewEncoder(w).Encode(likes); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	like, err := h.likeContentService.LikeContent(input.UserID, contentId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, like)
 }
 
 func (h *Handler) GetOneLike(w http.ResponseWriter, r *http.Request) {
-	params := map[string]string{
-		"userId":    "number",
-		"contentId": "number",
-	}
+	var err error
 
-	results := utils.GetMultipleQueryParams(w, r, params)
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
-	userId, ok := results["userId"].(uint64)
-	if !ok {
-		http.Error(w, "Invalid type for 'userId'", http.StatusBadRequest)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	contentId, ok := results["contentId"].(uint64)
-	if !ok {
-		http.Error(w, "Invalid type for 'contentId'", http.StatusBadRequest)
+	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	likes, _ := h.likeContentService.GetOneLike(userId, contentId)
+	like, err := h.likeContentService.GetOneLike(userId, contentId)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(likes); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, like)
 }
 
 func (h *Handler) UnlikeContent(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
 
-	if id == 0 {
-		http.Error(w, "params is empty", http.StatusBadRequest)
-		return
-	}
-
-	err := h.likeContentService.UnlikeContent(id)
+	likeId := utils.GetPathParam(r, "likeId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	err = h.likeContentService.UnlikeContent(likeId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

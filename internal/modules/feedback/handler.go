@@ -12,7 +12,6 @@ type Handler struct {
 }
 
 type input struct {
-	UserID  uint64 `json:"userId"`
 	Message string `json:"message"`
 }
 
@@ -21,35 +20,42 @@ func NewHandler(feedbackService FeedbackService) Handler {
 }
 
 func (h *Handler) SendFeedback(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
+
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	var input input
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err = json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	feedback, _ := h.feedbackService.SendFeedback(userId, input.Message)
+	feedback, err := h.feedbackService.SendFeedback(userId, input.Message)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(feedback); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, feedback)
 }
 
 func (h *Handler) GetAllFeedbacks(w http.ResponseWriter, r *http.Request) {
 
-	feedbacks, _ := h.feedbackService.GetAllFeedbacks()
+	feedbacks, err := h.feedbackService.GetAllFeedbacks()
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(feedbacks); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, feedbacks)
 }

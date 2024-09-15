@@ -6,14 +6,19 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/like"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/save"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 type Handler struct {
 	contentService ContentService
+	likeService    like.LikeContentService
+	saveService    save.SaveContentService
 	S3Client       *s3.Client
 	BucketName     string
 }
@@ -24,6 +29,12 @@ type input struct {
 	UserID     uint64 `json:"userId"`
 	Caption    string `json:"caption"`
 	Path       string `json:"path"`
+}
+
+type ContentResponse struct {
+	Content entity.Content `json:"content"`
+	IsLiked bool           `json:"isLiked"`
+	IsSaved bool           `json:"isSaved"`
 }
 
 func NewHandler(service ContentService, s3Client *s3.Client, bucketName string) *Handler {
@@ -54,7 +65,7 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uploaderIdStr := r.FormValue("uploaderId")
-	
+
 	if uploaderIdStr == "" {
 		http.Error(w, "uploaderId must be filled", http.StatusBadRequest)
 		return
@@ -75,7 +86,9 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileType := handler.Header.Get("Content-Type")
+
 	var contentType entity.ContentType
+
 	if strings.HasPrefix(fileType, "image/") {
 		contentType = "image"
 	} else if strings.HasPrefix(fileType, "video/") {
@@ -96,127 +109,272 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := h.contentService.UploadContent(uploaderId, caption, fileUrl, contentType)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-// func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
-// 	var input input
-
-// 	err := json.NewDecoder(r.Body).Decode(&input)
-
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	content, _ := h.contentService.UploadContent(input.UploaderID, input.Caption, input.Path)
-
-// 	w.Header().Set("Content-Type", "application/json")
-
-// 	if err := json.NewEncoder(w).Encode(content); err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// }
-
-func (h *Handler) UpdateContent(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
+	content, err := h.contentService.UploadContent(uploaderId, caption, fileUrl, contentType)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	content, _ := h.contentService.UpdateContent(input.ID, input.Caption)
+	utils.SuccessResponse(w, content)
+}
 
-	w.Header().Set("Content-Type", "application/json")
+func (h *Handler) UpdateContent(w http.ResponseWriter, r *http.Request) {
+	var err error
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	var input input
+
+	err = json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	content, err := h.contentService.UpdateContent(contentId, input.Caption)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, content)
 }
 
 func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
+	var err error
 
-	contents, _ := h.contentService.GetAllContents()
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
-	w.Header().Set("Content-Type", "application/json")
+	contents, err := h.contentService.GetAllContents()
 
-	if err := json.NewEncoder(w).Encode(contents); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	var wg sync.WaitGroup
+	response := make([]ContentResponse, len(*contents))
+
+	likeChan := make(chan struct {
+		index int
+		liked bool
+	}, len(*contents))
+
+	saveChan := make(chan struct {
+		index int
+		saved bool
+	}, len(*contents))
+
+	for i, content := range *contents {
+		wg.Add(2)
+
+		go func(index int, contentId uint64) {
+			defer wg.Done()
+
+			like, _ := h.likeService.GetOneLike(userId, contentId)
+
+			likeChan <- struct {
+				index int
+				liked bool
+			}{index: index, liked: like != nil}
+		}(i, content.ID)
+
+		go func(index int, contentId uint64) {
+			defer wg.Done()
+
+			save, _ := h.saveService.GetOneSave(userId, contentId)
+
+			saveChan <- struct {
+				index int
+				saved bool
+			}{index: index, saved: save != nil}
+		}(i, content.ID)
+	}
+
+	go func() {
+		wg.Wait()
+		close(likeChan)
+		close(saveChan)
+	}()
+
+	for i := 0; i < len(*contents); i++ {
+		select {
+		case likeResult := <-likeChan:
+			response[likeResult.index].Content = (*contents)[likeResult.index]
+			response[likeResult.index].IsLiked = likeResult.liked
+		case saveResult := <-saveChan:
+			response[saveResult.index].Content = (*contents)[saveResult.index]
+			response[saveResult.index].IsSaved = saveResult.saved
+		}
+	}
+
+	utils.SuccessResponse(w, response)
 }
 
 func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
 
-	content, _ := h.contentService.GetOneContent(id)
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	content, err := h.contentService.GetOneContent(contentId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	var response ContentResponse
+	response.Content = *content
+
+	var wg sync.WaitGroup
+
+	likeChan := make(chan bool, 1)
+	saveChan := make(chan bool, 1)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		like, _ := h.likeService.GetOneLike(userId, contentId)
+		likeChan <- like != nil
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		save, _ := h.saveService.GetOneSave(userId, contentId)
+		saveChan <- save != nil
+	}()
+
+	go func() {
+		wg.Wait()
+		close(likeChan)
+		close(saveChan)
+	}()
+
+	response.IsLiked = <-likeChan
+	response.IsSaved = <-saveChan
+
+	utils.SuccessResponse(w, response)
 }
 
 func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	content, _ := h.contentService.GetAllContentsByFollowing(input.UserID)
+	contents, err := h.contentService.GetAllContentsByFollowing(userId)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	response := make([]ContentResponse, len(*contents))
+	var wg sync.WaitGroup
+
+	likeChan := make(chan struct {
+		index   int
+		isLiked bool
+	}, len(*contents))
+
+	saveChan := make(chan struct {
+		index   int
+		isSaved bool
+	}, len(*contents))
+
+	for i, content := range *contents {
+		wg.Add(2)
+
+		go func(index int, contentId uint64) {
+			defer wg.Done()
+
+			like, _ := h.likeService.GetOneLike(userId, contentId)
+
+			likeChan <- struct {
+				index   int
+				isLiked bool
+			}{index: i, isLiked: like != nil}
+		}(i, content.ID)
+
+		go func(index int, contentId uint64) {
+			defer wg.Done()
+
+			save, _ := h.saveService.GetOneSave(userId, contentId)
+
+			saveChan <- struct {
+				index   int
+				isSaved bool
+			}{index: i, isSaved: save != nil}
+		}(i, content.ID)
+	}
+
+	go func() {
+		wg.Wait()
+		close(likeChan)
+		close(saveChan)
+	}()
+
+	for i := 0; i < len(*contents); i++ {
+		select {
+		case likeResult := <-likeChan:
+			response[likeResult.index].Content = (*contents)[likeResult.index]
+			response[likeResult.index].IsLiked = likeResult.isLiked
+		case saveResult := <-saveChan:
+			response[saveResult.index].Content = (*contents)[saveResult.index]
+			response[saveResult.index].IsSaved = saveResult.isSaved
+		}
+	}
+
+	utils.SuccessResponse(w, response)
 }
 
 func (h *Handler) DeleteContent(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.contentService.DeleteContent(input.ID)
+	err = h.contentService.DeleteContent(contentId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

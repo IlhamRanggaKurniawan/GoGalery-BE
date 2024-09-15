@@ -16,7 +16,6 @@ type Handler struct {
 }
 
 type input struct {
-	ID           uint64   `json:"id"`
 	UserID       uint64   `json:"userId"`
 	Participants []uint64 `json:"Participants"`
 }
@@ -36,7 +35,6 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-
 		if origin == "http://localhost:3000" {
 			return true
 		} else {
@@ -50,18 +48,30 @@ var connections = make(map[uint64][]*connection)
 func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		http.Error(w, "Failed to upgrade to WebSocket", http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 	defer conn.Close()
 
-	dmID := utils.GetOneQueryParam(w, r, "dmId", "number").(uint64)
-	userID := utils.GetOneQueryParam(w, r, "userId", "number").(uint64)
+	dmID := utils.GetQueryParam(r, "dmId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	userID := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	existingConnections := connections[dmID]
+
 	for _, existingConn := range existingConnections {
 		if existingConn.UserID == userID {
-			existingConn.Conn.Close() // Tutup koneksi lama
+			existingConn.Conn.Close()
 			connections[dmID] = removeConnection(dmID, existingConn)
 			break
 		}
@@ -72,6 +82,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		Conn:   conn,
 		DmID:   dmID,
 	}
+
 	connections[dmID] = append(connections[dmID], newConn)
 
 	for {
@@ -83,6 +94,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 		newMessage, err := h.messageRepository.Create(userID, dmID, 0, string(message))
 		if err != nil {
+			utils.ErrorResponse(w, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -111,115 +123,115 @@ func removeConnection(dmId uint64, connToRemove *connection) []*connection {
 
 func (h *Handler) CreateDirectMessage(w http.ResponseWriter, r *http.Request) {
 	var input input
+
 	err := json.NewDecoder(r.Body).Decode(&input)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	feedback, err := h.directMessageService.CreateDirectMessage(input.Participants)
+	directMessage, err := h.directMessageService.CreateDirectMessage(input.Participants)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(feedback); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	utils.SuccessResponse(w, directMessage)
 }
 
 func (h *Handler) GetAllDirectMessages(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
-	if userId == 0 {
-		http.Error(w, "params is empty", http.StatusBadRequest)
-		return
-	}
+	var err error
 
-	directMessage, err := h.directMessageService.GetAllDirectMessages(userId)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(directMessage); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	directMessages, err := h.directMessageService.GetAllDirectMessages(userId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
+
+	utils.SuccessResponse(w, directMessages)
 }
 
 func (h *Handler) GetOneDirectMessageByParticipants(w http.ResponseWriter, r *http.Request) {
-	params := map[string]string{
-		"participant1Id": "number",
-		"participant2Id": "number",
-	}
+	var err error
 
-	results := utils.GetMultipleQueryParams(w, r, params)
-	if results == nil {
-		http.Error(w, "Missing participant1 and participant2", http.StatusBadRequest)
+	participant1Id := utils.GetQueryParam(r, "participant1Id", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	participant1Id, ok := results["participant1Id"].(uint64)
-	if !ok {
-		http.Error(w, "Invalid type for 'participant1Id'", http.StatusInternalServerError)
-		return
-	}
+	participant2Id := utils.GetQueryParam(r, "participant2Id", "number", &err).(uint64)
 
-	participant2Id, ok := results["participant2Id"].(uint64)
-	if !ok {
-		http.Error(w, "Invalid type for 'participant2Id'", http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
 	participants := []uint64{participant1Id, participant2Id}
 
-	directMessage, _ := h.directMessageService.GetOneDirectMessageByParticipants(participants)
+	directMessage, err := h.directMessageService.GetOneDirectMessageByParticipants(participants)
 
-	w.Header().Set("Content-Type", "application/json")
-	
-	if err := json.NewEncoder(w).Encode(directMessage); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
+
+	utils.SuccessResponse(w, directMessage)
 }
 
 func (h *Handler) GetOneDirectMessage(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
 
-	directMessage, err := h.directMessageService.GetOneDirectMessage(id)
+	dmId := utils.GetPathParam(r, "dmId", "number", &err).(uint64)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(directMessage); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	directMessage, err := h.directMessageService.GetOneDirectMessage(dmId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
 	}
+
+	utils.SuccessResponse(w, directMessage)
 }
 
 func (h *Handler) DeleteDirectMessage(w http.ResponseWriter, r *http.Request) {
-	var input input
-	err := json.NewDecoder(r.Body).Decode(&input)
+	var err error
+
+	dmId := utils.GetPathParam(r, "dmId", "number", &err).(uint64)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.directMessageService.DeleteDirectMessage(input.ID)
+	err = h.directMessageService.DeleteDirectMessage(dmId)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	utils.SuccessResponse(w, resp)
 }

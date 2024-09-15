@@ -20,23 +20,32 @@ func NewHandler(saveContentService SaveContentService) Handler {
 }
 
 func (h *Handler) SaveContent(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	like, err := h.saveContentService.SaveContent(input.UserID, input.ContentID)
+	var input input
+
+	err = json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	save, err := h.saveContentService.SaveContent(input.UserID, contentId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	utils.SuccessResponse(w, like)
+	utils.SuccessResponse(w, save)
 }
 
 func (h *Handler) GetAllSaves(w http.ResponseWriter, r *http.Request) {
@@ -89,14 +98,14 @@ func (h *Handler) GetOneSave(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UnsaveContent(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	id := utils.GetPathParam(r, "id", "number", &err).(uint64)
+	saveId := utils.GetPathParam(r, "saveId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.saveContentService.UnsaveContent(id)
+	err = h.saveContentService.UnsaveContent(saveId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

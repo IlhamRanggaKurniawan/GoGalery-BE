@@ -12,7 +12,6 @@ type Handler struct {
 }
 
 type input struct {
-	ID        uint64 `json:"id"`
 	ContentID uint64 `json:"contentId"`
 	UserID    uint64 `json:"userId"`
 	Message   string `json:"message"`
@@ -23,71 +22,94 @@ func NewHandler(commentService CommentService) Handler {
 }
 
 func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+	var err error
+
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	var input input
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err = json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	content, _ := h.commentService.SendComment(userId, input.ContentID, input.Message)
+	content, err := h.commentService.SendComment(input.UserID, contentId, input.Message)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, content)
 }
 
 func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
-	contentId := utils.GetPathParam(w, r, "contentId", "number").(uint64)
+	var err error
 
-	content, _ := h.commentService.GetAllComments(contentId)
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	content, err := h.commentService.GetAllComments(contentId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, content)
 }
 
 func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	commentId := utils.GetPathParam(r, "commentId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	content, _ := h.commentService.updateComment(input.ID, input.Message)
+	var input input
 
-	w.Header().Set("Content-Type", "application/json")
+	err = json.NewDecoder(r.Body).Decode(&input)
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	content, err := h.commentService.updateComment(commentId, input.Message)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, content)
 }
 
 func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
 
-	err := h.commentService.DeleteContent(id)
+	commentId := utils.GetPathParam(r, "commentId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	err = h.commentService.DeleteContent(commentId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	resp := struct {
 		Message string `json:"message"`
@@ -95,8 +117,5 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

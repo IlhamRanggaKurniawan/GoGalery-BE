@@ -7,7 +7,6 @@ import (
 
 type LikeContentRepository interface {
 	Create(userId uint64, contentId uint64) (*entity.LikeContent, error)
-	FindAll(contentId uint64) (*[]entity.LikeContent, error)
 	FindOne(userId uint64, contentId uint64) (*entity.LikeContent, error)
 	DeleteOne(id uint64) error
 }
@@ -33,18 +32,6 @@ func (r *likeContentRepository) Create(userId uint64, contentId uint64) (*entity
 	}
 
 	return &like, nil
-}
-
-func (r *likeContentRepository) FindAll(contentId uint64) (*[]entity.LikeContent, error) {
-	var likes []entity.LikeContent
-
-	err := r.db.Where("content_id = ?", contentId).Find(&likes).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &likes, nil
 }
 
 func (r *likeContentRepository) FindOne(userId uint64, contentId uint64) (*entity.LikeContent, error) {

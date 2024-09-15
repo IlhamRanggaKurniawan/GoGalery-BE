@@ -6,7 +6,6 @@ import (
 
 type LikeContentService interface {
 	LikeContent(userId uint64, contentId uint64) (*entity.LikeContent, error)
-	GetAllLikes(contentId uint64) (*[]entity.LikeContent, error)
 	GetOneLike(userId uint64, contentId uint64) (*entity.LikeContent, error)
 	UnlikeContent(id uint64) error
 }
@@ -30,17 +29,6 @@ func (s *likeContentService) LikeContent(userId uint64, contentId uint64) (*enti
 	}
 
 	return like, nil
-}
-
-func (s *likeContentService) GetAllLikes(contentId uint64) (*[]entity.LikeContent, error) {
-
-	likes, err := s.likeContentRepository.FindAll(contentId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return likes, nil
 }
 
 func (s *likeContentService) GetOneLike(userId uint64, contentId uint64) (*entity.LikeContent, error) {

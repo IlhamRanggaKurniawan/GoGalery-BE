@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/fetchAPI"
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -12,9 +13,8 @@ type Handler struct {
 }
 
 type input struct {
-	ID             uint64          `json:"id"`
-	SenderID       uint64          `json:"senderId"`
-	ConversationId uint64          `json:"conversationId"`
+	SenderID       uint64             `json:"senderId"`
+	ConversationId uint64             `json:"conversationId"`
 	Prompt         []fetchAPI.Message `json:"prompt"`
 }
 
@@ -23,56 +23,49 @@ func NewHandler(aIMessageService AIMessageService) Handler {
 }
 
 func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	message, _ := h.aIMessageService.SendMessage(input.SenderID, input.ConversationId, input.Prompt)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(message); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *Handler) GetAllMessages(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
+	conversationId := utils.GetPathParam(r, "conversationId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	messages, _ := h.aIMessageService.GetAllMessages(input.ConversationId)
+	var input input
 
-	w.Header().Set("Content-Type", "application/json")
+	err = json.NewDecoder(r.Body).Decode(&input)
 
-	if err := json.NewEncoder(w).Encode(messages); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	message, err := h.aIMessageService.SendMessage(input.SenderID, conversationId, input.Prompt)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, message)
 }
 
 // func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
+// 	var err error
+
+// 	messageId := utils.GetPathParam(r, "messageId", "number", &err).(uint64)
+
 // 	var input input
 
-// 	err := json.NewDecoder(r.Body).Decode(&input)
+// 	err = json.NewDecoder(r.Body).Decode(&input)
 
 // 	if err != nil {
 // 		http.Error(w, err.Error(), http.StatusBadRequest)
 // 		return
 // 	}
 
-// 	message, _ := h.aIMessageService.UpdateMessage(input.ID, input.Message)
+// 	message, _ := h.aIMessageService.UpdateMessage(messageId, input.Message)
 
 // 	w.Header().Set("Content-Type", "application/json")
 
@@ -83,31 +76,27 @@ func (h *Handler) GetAllMessages(w http.ResponseWriter, r *http.Request) {
 // }
 
 func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	messageId := utils.GetPathParam(r, "messageId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.aIMessageService.DeleteMessage(input.ID)
+	err = h.aIMessageService.DeleteMessage(messageId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

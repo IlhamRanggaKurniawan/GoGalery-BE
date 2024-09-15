@@ -1,7 +1,6 @@
 package aIconversation
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
@@ -11,71 +10,66 @@ type Handler struct {
 	aIConversationService AIConversationService
 }
 
-type input struct {
-	ID     uint64 `json:"id"`
-	UserID uint64 `json:"userId"`
-}
-
 func NewHandler(aIConversationService AIConversationService) Handler {
 	return Handler{aIConversationService}
 }
 
 func (h *Handler) CreateConversation(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	conversation, _ := h.aIConversationService.CreateConversation(input.UserID)
+	conversation, err := h.aIConversationService.CreateConversation(userId)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(conversation); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, conversation)
 }
 
 func (h *Handler) GetConversation(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+	var err error
 
-	if userId == 0 {
-		http.Error(w, "params is empty", http.StatusBadRequest)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	conversation, _ := h.aIConversationService.GetConversation(userId)
+	conversation, err := h.aIConversationService.GetConversation(userId)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(conversation); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, conversation)
 }
 
 func (h *Handler) DeleteConversation(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	conversationId := utils.GetPathParam(r, "conversationId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.aIConversationService.DeleteConversation(input.ID)
+	err = h.aIConversationService.DeleteConversation(conversationId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	resp := struct {
 		Message string `json:"message"`
@@ -83,8 +77,5 @@ func (h *Handler) DeleteConversation(w http.ResponseWriter, r *http.Request) {
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

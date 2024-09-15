@@ -9,8 +9,8 @@ type ContentRepository interface {
 	Create(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error)
 	FindAll() (*[]entity.Content, error)
 	FindAllByFollowing(userId uint64) (*[]entity.Content, error)
-	FindOne(id uint64) (*entity.Content, error)
-	Update(id uint64, caption string) (*entity.Content, error)
+	FindOneById(id uint64) (*entity.Content, error)
+	Update(content *entity.Content) (*entity.Content, error)
 	DeleteOne(id uint64) error
 }
 
@@ -51,7 +51,7 @@ func (r *contentRepository) FindAll() (*[]entity.Content, error) {
 	return &contents, nil
 }
 
-func (r *contentRepository) FindOne(id uint64) (*entity.Content, error) {
+func (r *contentRepository) FindOneById(id uint64) (*entity.Content, error) {
 	var content entity.Content
 
 	err := r.db.Preload("Comments").Preload("Uploader").Where("id = ?", id).Take(&content).Error
@@ -77,14 +77,7 @@ func (r *contentRepository) FindAllByFollowing(userId uint64) (*[]entity.Content
 	return &contents, nil
 }
 
-func (r *contentRepository) Update(id uint64, caption string) (*entity.Content, error) {
-
-	content, err := r.FindOne(id)
-
-	if err != nil {
-		return nil, err
-	}
-	content.Caption = caption
+func (r *contentRepository) Update(content *entity.Content) (*entity.Content, error) {
 
 	r.db.Save(&content)
 

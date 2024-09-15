@@ -23,7 +23,6 @@ type connection struct {
 }
 
 type input struct {
-	ID         uint64 `json:"id"`
 	UserID     uint64 `json:"userId"`
 	Name       string `json:"name"`
 	Members    []entity.User
@@ -52,14 +51,26 @@ var connections = make(map[uint64][]*connection)
 
 func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
+
 	if err != nil {
-		http.Error(w, "Failed to upgrade to WebSocket", http.StatusInternalServerError)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 	defer conn.Close()
 
-	groupID := utils.GetOneQueryParam(w, r, "groupId", "number").(uint64)
-	userID := utils.GetOneQueryParam(w, r, "userId", "number").(uint64)
+	groupID := utils.GetQueryParam(r, "groupId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	userID := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	existingConnections := connections[groupID]
 	for _, existingConn := range existingConnections {
@@ -86,7 +97,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 		newMessage, err := h.messageRepository.Create(userID, 0, groupID, string(message))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.ErrorResponse(w, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -119,101 +130,141 @@ func (h *Handler) CreateGroupChat(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	group, _ := h.groupChatService.CreateGroupChat(input.Name, input.Members)
+	group, err := h.groupChatService.CreateGroupChat(input.Name, input.Members)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(group); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, group)
 }
 
 func (h *Handler) AddMembers(w http.ResponseWriter, r *http.Request) {
-	groupId := utils.GetPathParam(w, r, "groupId", "number").(uint64)
+	var err error
+
+	groupId := utils.GetPathParam(r, "groupId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	var input input
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err = json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	group, _ := h.groupChatService.AddMembers(groupId, input.Members)
+	group, err := h.groupChatService.AddMembers(groupId, input.Members)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(group); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, group)
 }
 
 func (h *Handler) GetAllGroupChats(w http.ResponseWriter, r *http.Request) {
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
+	var err error
 
-	feedback, _ := h.groupChatService.GetAllGroupChats(userId)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(feedback); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	groups, err := h.groupChatService.GetAllGroupChats(userId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, groups)
 }
 
 func (h *Handler) GetOneGroupChat(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
 
-	group, _ := h.groupChatService.GetOneGroupChat(id)
+	groupId := utils.GetPathParam(r, "groupId", "number", &err).(uint64)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(group); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	group, err := h.groupChatService.GetOneGroupChat(groupId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, group)
 }
 
 func (h *Handler) UpdateGroupChat(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	groupId := utils.GetPathParam(r, "groupId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	feedback, _ := h.groupChatService.UpdateGroupChat(input.ID, input.PictureUrl)
+	var input input
 
-	w.Header().Set("Content-Type", "application/json")
+	err = json.NewDecoder(r.Body).Decode(&input)
 
-	if err := json.NewEncoder(w).Encode(feedback); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	group, err := h.groupChatService.UpdateGroupChat(groupId, input.PictureUrl)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, group)
 }
 
 func (h *Handler) LeaveGroupChat(w http.ResponseWriter, r *http.Request) {
+	var err error
 
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
-	groupId := utils.GetPathParam(w, r, "groupId", "number").(uint64)
-
-	err := h.groupChatService.LeaveGroupChat(userId, groupId)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	groupId := utils.GetPathParam(r, "groupId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = h.groupChatService.LeaveGroupChat(userId, groupId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	resp := struct {
 		Message string `json:"message"`
@@ -221,29 +272,24 @@ func (h *Handler) LeaveGroupChat(w http.ResponseWriter, r *http.Request) {
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }
 func (h *Handler) DeleteGroupChat(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	groupId := utils.GetPathParam(r, "groupId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.groupChatService.DeleteGroupChat(input.ID)
+	err = h.groupChatService.DeleteGroupChat(groupId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	resp := struct {
 		Message string `json:"message"`
@@ -251,8 +297,5 @@ func (h *Handler) DeleteGroupChat(w http.ResponseWriter, r *http.Request) {
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

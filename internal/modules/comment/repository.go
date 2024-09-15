@@ -9,7 +9,7 @@ type CommentRepository interface {
 	Create(userId uint64, contentId uint64, text string) (*entity.Comment, error)
 	FindAll(contentId uint64) (*[]entity.Comment, error)
 	FindOne(id uint64) (*entity.Comment, error)
-	Update(id uint64, text string) (*entity.Comment, error)
+	Update(comment *entity.Comment) (*entity.Comment, error)
 	DeleteOne(id uint64) error
 }
 
@@ -32,7 +32,7 @@ func (r *commentRepository) Create(userId uint64, contentId uint64, text string)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &comment, nil
 }
 
@@ -60,14 +60,7 @@ func (r *commentRepository) FindOne(id uint64) (*entity.Comment, error) {
 	return &comment, nil
 }
 
-func (r *commentRepository) Update(id uint64, text string) (*entity.Comment, error) {
-	comment, err := r.FindOne(id)
-
-	if err != nil {
-		return nil, err
-	}
-	comment.Comment = text
-
+func (r *commentRepository) Update(comment *entity.Comment) (*entity.Comment, error) {
 	r.db.Save(&comment)
 
 	return comment, nil
@@ -76,7 +69,7 @@ func (r *commentRepository) Update(id uint64, text string) (*entity.Comment, err
 func (r *commentRepository) DeleteOne(id uint64) error {
 
 	err := r.db.Delete(&entity.Comment{}, id).Error
-	
+
 	if err != nil {
 		return err
 	}

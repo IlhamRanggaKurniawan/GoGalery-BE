@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -29,7 +30,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		for _, route := range unprotectedRoutes {
-			if strings.HasPrefix(r.URL.Path, route) {
+			if r.URL.Path == route {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -38,12 +39,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		token := r.Header.Get("Authorization")
 
 		if token == "" {
-			http.Error(w, "Missing token", http.StatusUnauthorized)
+			utils.ErrorResponse(w, fmt.Errorf("missing token"), http.StatusUnauthorized)
 			return
 		}
 
 		if !strings.HasPrefix(token, "Bearer ") {
-			http.Error(w, "Invalid token type", http.StatusUnauthorized)
+			utils.ErrorResponse(w, fmt.Errorf("invalid token type"), http.StatusUnauthorized)
 			return
 		}
 
@@ -52,7 +53,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		_, err := utils.ValidateToken(tokenString, "Access Token")
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			utils.ErrorResponse(w, err, http.StatusUnauthorized)
 			return
 		}
 
@@ -65,11 +66,11 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		allowedOrigins := []string{
 			"https://connect-verse-seven.vercel.app",
 			"http://localhost:3000",
-			"http://localhost:3001",
-			"",
 		}
 
 		origin := r.Header.Get("Origin")
+
+		allowed := false
 
 		for _, allowedOrigin := range allowedOrigins {
 			if origin == allowedOrigin {
@@ -77,8 +78,14 @@ func CorsMiddleware(next http.Handler) http.Handler {
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				allowed = true
 				break
 			}
+		}
+
+		if !allowed {
+			utils.ErrorResponse(w, fmt.Errorf("origin not allowed"), http.StatusForbidden)
+			return
 		}
 
 		if r.Method == http.MethodOptions {

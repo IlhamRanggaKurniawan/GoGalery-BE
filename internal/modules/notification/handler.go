@@ -1,7 +1,6 @@
 package notification
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
@@ -21,86 +20,55 @@ func NewHandler(notificationService NotificationService) Handler {
 	return Handler{notificationService}
 }
 
-func (h *Handler) CreateNotification(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	notification, _ := h.notificationService.CreateNotification(input.ReceiverID, input.TriggerID, input.Content)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(notification); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
 func (h *Handler) GetAllNotifications(w http.ResponseWriter, r *http.Request) {
+	var err error
 
-	userId := utils.GetPathParam(w, r, "userId", "number").(uint64)
-
-	notifications, _ := h.notificationService.GetAllNotifications(userId)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(notifications); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *Handler) UpdateNotifications(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
+	receiverId := utils.GetPathParam(r, "receiverId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	messages, _ := h.notificationService.UpdateNotifications(input.ReceiverID)
+	notifications, err := h.notificationService.GetAllNotifications(receiverId)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(messages); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	notifications, err = h.notificationService.UpdateNotifications(receiverId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, notifications)
 }
 
 func (h *Handler) DeleteNotifications(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	receiverId := utils.GetPathParam(r, "receiverId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.notificationService.DeleteNotifications(input.ReceiverID)
+	err = h.notificationService.DeleteNotifications(receiverId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

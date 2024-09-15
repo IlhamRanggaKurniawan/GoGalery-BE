@@ -172,7 +172,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	id := utils.GetPathParam(r, "id", "number", &err).(uint64)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -197,7 +197,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	token := ""
 
-	_, err = h.userService.UpdateUser(id, nil, nil, nil, &token)
+	_, err = h.userService.UpdateUser(userId, nil, nil, nil, &token)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -216,7 +216,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	userId := utils.GetPathParam(r, "id", "number", &err).(uint64)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -309,7 +309,7 @@ func (h *Handler) FindAllMutualUsers(w http.ResponseWriter, r *http.Request) {
 	utils.SuccessResponse(w, users)
 }
 
-func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) FindOneUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	username := utils.GetPathParam(r, "username", "string", &err).(string)

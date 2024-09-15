@@ -12,7 +12,6 @@ type Handler struct {
 }
 
 type input struct {
-	ID              uint64 `json:"id"`
 	SenderID        uint64 `json:"senderId"`
 	Message         string `json:"message"`
 	DirectMessageID uint64 `json:"directMessageId"`
@@ -24,116 +23,114 @@ func NewHandler(messageService MessageService) Handler {
 }
 
 func (h *Handler) SendPrivateMessage(w http.ResponseWriter, r *http.Request) {
-	conversationId := utils.GetPathParam(w, r, "id", "number").(uint64)
+	var err error
+
+	conversationId := utils.GetPathParam(r, "conversationId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	var input input
 
-	
-	err := json.NewDecoder(r.Body).Decode(&input)
-	
+	err = json.NewDecoder(r.Body).Decode(&input)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	message, _ := h.messageService.SendMessage(input.SenderID, conversationId, 0, input.Message)
+	message, err := h.messageService.SendMessage(input.SenderID, conversationId, 0, input.Message)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(message); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, message)
 }
 
 func (h *Handler) SendGroupMessage(w http.ResponseWriter, r *http.Request) {
-	conversationId := utils.GetPathParam(w, r, "conversationId", "number").(uint64)
+	var err error
+
+	conversationId := utils.GetPathParam(r, "conversationId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	var input input
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err = json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	message, _ := h.messageService.SendMessage(input.SenderID, 0, conversationId, input.Message)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(message); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *Handler) GetAllMessage(w http.ResponseWriter, r *http.Request) {
-	var input input
-
-	err := json.NewDecoder(r.Body).Decode(&input)
+	message, err := h.messageService.SendMessage(input.SenderID, 0, conversationId, input.Message)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	messages, _ := h.messageService.GetAllMessages(input.DirectMessageID, input.GroupChatID)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(messages); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, message)
 }
 
 func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	messageId := utils.GetPathParam(r, "messageId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	messages, _ := h.messageService.UpdateMessage(input.ID, input.Message)
+	var input input
 
-	w.Header().Set("Content-Type", "application/json")
+	err = json.NewDecoder(r.Body).Decode(&input)
 
-	if err := json.NewEncoder(w).Encode(messages); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	message, err := h.messageService.UpdateMessage(messageId, input.Message)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, message)
 }
 
 func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	messageId := utils.GetPathParam(r, "messageId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.messageService.DeleteMessage(input.ID)
+	err = h.messageService.DeleteMessage(messageId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

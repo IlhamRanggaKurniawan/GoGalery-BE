@@ -2,9 +2,10 @@ package follow
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
-	"net/http"
 )
 
 type Handler struct {
@@ -12,7 +13,6 @@ type Handler struct {
 }
 
 type input struct {
-	ID          uint64 `json:"id"`
 	UserID      uint64 `json:"userId"`
 	FollowerID  uint64 `json:"followerId"`
 	FollowingID uint64 `json:"followingId"`
@@ -28,99 +28,137 @@ func (h *Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	follow, _ := h.followService.followUser(input.FollowerID, input.FollowingID)
+	follow, err := h.followService.followUser(input.FollowerID, input.FollowingID)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(follow); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, follow)
 }
 
 func (h *Handler) GetAllFollows(w http.ResponseWriter, r *http.Request) {
-	var input input
+	var err error
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	follower, following, _ := h.followService.GetAllFollows(input.UserID)
+	followerChan := make(chan *[]entity.Follow)
+	followingChan := make(chan *[]entity.Follow)
+
+	go func() {
+		follower, _ := h.followService.GetAllFollower(userId)
+		followerChan <- follower
+	}()
+
+	go func() {
+		following, _ := h.followService.GetAllFollowing(userId)
+		followingChan <- following
+	}()
 
 	follow := struct {
 		Follower  *[]entity.Follow `json:"follower"`
 		Following *[]entity.Follow `json:"following"`
 	}{
-		Follower:  follower,
-		Following: following,
+		Follower:  <-followerChan,
+		Following: <-followingChan,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	utils.SuccessResponse(w, follow)
+}
 
-	if err := json.NewEncoder(w).Encode(follow); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+func (h *Handler) CountFollow(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+
+	followerChan := make(chan int64)
+	followingChan := make(chan int64)
+
+	go func() {
+		follower, _ := h.followService.CountFollower(userId)
+		followerChan <- follower
+	}()
+
+	go func() {
+		following, _ := h.followService.CountFollowing(userId)
+		followingChan <- following
+	}()
+
+	follow := struct {
+		Follower  int64 `json:"follower"`
+		Following int64 `json:"following"`
+	}{
+		Follower:  <-followerChan,
+		Following: <-followingChan,
+	}
+
+	utils.SuccessResponse(w, follow)
 }
 
 func (h *Handler) CheckFollowing(w http.ResponseWriter, r *http.Request) {
-	params := map[string]string{
-		"followerId":  "number",
-		"followingId": "number",
-	}
+	var err error
 
-	results := utils.GetMultipleQueryParams(w, r, params)
+	followerId := utils.GetQueryParam(r, "followerId", "number", &err).(uint64)
 
-	followerId, ok := results["followerId"].(uint64)
-
-	if !ok {
-		http.Error(w, "Invalid type for 'followerId'", http.StatusBadRequest)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	followingId, ok := results["followingId"].(uint64)
+	followingId := utils.GetQueryParam(r, "followingId", "number", &err).(uint64)
 
-	if !ok {
-		http.Error(w, "Invalid type for 'contentId'", http.StatusBadRequest)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	follow, _ := h.followService.CheckFollowing(followerId, followingId)
+	follow, err := h.followService.CheckFollowing(followerId, followingId)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(follow); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	utils.SuccessResponse(w, follow)
 }
 
 func (h *Handler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
-	id := utils.GetPathParam(w,r, "id", "number").(uint64)
+	var err error
 
-	err := h.followService.UnfollowUser(id)
+	followId := utils.GetPathParam(r, "followId", "number", &err).(uint64)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	err = h.followService.UnfollowUser(followId)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	resp := struct {
 		Message string `json:"message"`
 	}{
 		Message: "request success",
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	utils.SuccessResponse(w, resp)
 }

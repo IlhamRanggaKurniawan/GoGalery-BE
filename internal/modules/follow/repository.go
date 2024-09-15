@@ -7,9 +7,11 @@ import (
 
 type FollowRepository interface {
 	Create(followerId uint64, followingId uint64) (*entity.Follow, error)
-	FindAll(userId uint64) (*[]entity.Follow, *[]entity.Follow, error)
+	FindAllFollower(userId uint64) (*[]entity.Follow, error)
+	FindAllFollowing(userId uint64) (*[]entity.Follow, error)
+	CountFollower(userId uint64) (int64, error)
+	CountFollowing(userId uint64) (int64, error)
 	FindOne(followerId uint64, followingId uint64) (*entity.Follow, error)
-	GetDB() *gorm.DB
 	DeleteOne(id uint64) error
 }
 
@@ -36,23 +38,44 @@ func (r *followRepository) Create(followerId uint64, followingId uint64) (*entit
 	return &follow, nil
 }
 
-func (r *followRepository) FindAll(userId uint64) (*[]entity.Follow, *[]entity.Follow, error) {
+func (r *followRepository) FindAllFollower(userId uint64) (*[]entity.Follow, error) {
 	var follower []entity.Follow
-	var following []entity.Follow
 
 	err := r.db.Where("following_id = ?", userId).Find(&follower).Error
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	err = r.db.Where("follower_id = ?", userId).Find(&following).Error
+	return &follower, nil
+}
+
+func (r *followRepository) FindAllFollowing(userId uint64) (*[]entity.Follow, error) {
+	var following []entity.Follow
+
+	err := r.db.Where("follower_id = ?", userId).Find(&following).Error
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return &follower, &following, nil
+	return &following, nil
+}
+
+func (r *followRepository) CountFollower(userId uint64) (int64, error) {
+	var follower int64
+
+	err := r.db.Model(&entity.Follow{}).Where("following_id = ?", userId).Count(&follower).Error
+
+	return follower, err
+}
+
+func (r *followRepository) CountFollowing(userId uint64) (int64, error) {
+	var following int64
+
+	err := r.db.Model(&entity.Follow{}).Where("follower_id = ?", userId).Count(&following).Error
+
+	return following, err
 }
 
 func (r *followRepository) FindOne(followerId uint64, followingId uint64) (*entity.Follow, error) {
@@ -65,10 +88,6 @@ func (r *followRepository) FindOne(followerId uint64, followingId uint64) (*enti
 	}
 
 	return &follow, nil
-}
-
-func (r *followRepository) GetDB() *gorm.DB {
-	return r.db
 }
 
 func (r *followRepository) DeleteOne(id uint64) error {

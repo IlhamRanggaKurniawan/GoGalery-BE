@@ -35,15 +35,15 @@ func (r *aIConversationRepository) Create(userId uint64) (*entity.AIConversation
 
 func (r *aIConversationRepository) FindOne(userId uint64) (*entity.AIConversation, error) {
 
-	var DirectMessage entity.AIConversation
+	var aIConversation entity.AIConversation
 
-	err := r.db.Preload("Messages").Where("user_id = ?", userId).Take(&DirectMessage).Error
+	err := r.db.Preload("Messages").Where("user_id = ?", userId).Take(&aIConversation).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &DirectMessage, nil
+	return &aIConversation, nil
 }
 
 func (r *aIConversationRepository) DeleteOne(id uint64) error {

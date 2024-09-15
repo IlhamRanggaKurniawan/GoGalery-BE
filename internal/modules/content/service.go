@@ -34,7 +34,15 @@ func (s *contentService) UploadContent(uploaderId uint64, caption string, url st
 
 func (s *contentService) UpdateContent(id uint64, caption string) (*entity.Content, error) {
 
-	content, err := s.contentRepository.Update(id, caption)
+	content, err := s.contentRepository.FindOneById(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	content.Caption = caption
+
+	content, err = s.contentRepository.Update(content)
 
 	if err != nil {
 		return nil, err
@@ -67,7 +75,7 @@ func (s *contentService) GetAllContentsByFollowing(userId uint64) (*[]entity.Con
 
 func (s *contentService) GetOneContent(id uint64) (*entity.Content, error) {
 
-	content, err := s.contentRepository.FindOne(id)
+	content, err := s.contentRepository.FindOneById(id)
 
 	if err != nil {
 		return nil, err

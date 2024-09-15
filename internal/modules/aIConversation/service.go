@@ -20,24 +20,24 @@ func NewAIConversationService(aIConversationRepository AIConversationRepository)
 
 func (s *aIConversationService) CreateConversation(userId uint64) (*entity.AIConversation, error) {
 
-	directMessage, err := s.aIConversationRepository.Create(userId)
+	aIConversation, err := s.aIConversationRepository.Create(userId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return directMessage, nil
+	return aIConversation, nil
 }
 
 func (s *aIConversationService) GetConversation(userId uint64) (*entity.AIConversation, error) {
 
-	directMessage, err := s.aIConversationRepository.FindOne(userId)
+	aIConversation, err := s.aIConversationRepository.FindOne(userId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return directMessage, nil
+	return aIConversation, nil
 }
 
 func (s *aIConversationService) DeleteConversation(id uint64) error{
