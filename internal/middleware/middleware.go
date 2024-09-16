@@ -22,11 +22,11 @@ func CreateStack(md ...Middleware) Middleware {
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		unprotectedRoutes := []string{
-			"/user/register",
-			"/user/login",
-			"/token",
-			"/ws/dm",
-			"/ws/gc",
+			"/v1/user",
+			"/v1/user/login",
+			"/v1/token",
+			"/v1/ws/dm",
+			"/v1/ws/gc",
 		}
 
 		for _, route := range unprotectedRoutes {
@@ -66,6 +66,7 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		allowedOrigins := []string{
 			"https://connect-verse-seven.vercel.app",
 			"http://localhost:3000",
+			"",
 		}
 
 		origin := r.Header.Get("Origin")
@@ -78,6 +79,7 @@ func CorsMiddleware(next http.Handler) http.Handler {
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				w.Header().Set("Content-Type", "application/json")
 				allowed = true
 				break
 			}

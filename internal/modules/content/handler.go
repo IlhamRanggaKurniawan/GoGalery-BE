@@ -31,17 +31,29 @@ type input struct {
 	Path       string `json:"path"`
 }
 
-type ContentResponse struct {
-	Content entity.Content `json:"content"`
-	IsLiked bool           `json:"isLiked"`
-	IsSaved bool           `json:"isSaved"`
+type Like struct {
+	IsLiked bool   `json:"isLiked"`
+	LikeId  uint64 `json:"likeId"`
 }
 
-func NewHandler(service ContentService, s3Client *s3.Client, bucketName string) *Handler {
+type Save struct {
+	IsSaved bool   `json:"isSaved"`
+	SaveId  uint64 `json:"saveId"`
+}
+
+type ContentResponse struct {
+	Content entity.Content `json:"content"`
+	Like    Like
+	Save    Save
+}
+
+func NewHandler(service ContentService, s3Client *s3.Client, bucketName string, likeService like.LikeContentService, saveService save.SaveContentService) *Handler {
 	return &Handler{
 		contentService: service,
 		S3Client:       s3Client,
 		BucketName:     bucketName,
+		likeService:    likeService,
+		saveService:    saveService,
 	}
 }
 
@@ -153,6 +165,11 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 
 	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
 	contents, err := h.contentService.GetAllContents()
 
 	if err != nil {
@@ -164,13 +181,15 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 	response := make([]ContentResponse, len(*contents))
 
 	likeChan := make(chan struct {
-		index int
-		liked bool
+		index  int
+		liked  bool
+		likeId uint64
 	}, len(*contents))
 
 	saveChan := make(chan struct {
-		index int
-		saved bool
+		index  int
+		saved  bool
+		saveId uint64
 	}, len(*contents))
 
 	for i, content := range *contents {
@@ -181,10 +200,18 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 
 			like, _ := h.likeService.GetOneLike(userId, contentId)
 
+			var likeId uint64
+			if like != nil {
+				likeId = like.ID
+			} else {
+				likeId = 0
+			}
+
 			likeChan <- struct {
-				index int
-				liked bool
-			}{index: index, liked: like != nil}
+				index  int
+				liked  bool
+				likeId uint64
+			}{index: index, liked: like != nil, likeId: likeId}
 		}(i, content.ID)
 
 		go func(index int, contentId uint64) {
@@ -192,10 +219,18 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 
 			save, _ := h.saveService.GetOneSave(userId, contentId)
 
+			var saveId uint64
+			if save != nil {
+				saveId = save.ID
+			} else {
+				saveId = 0
+			}
+
 			saveChan <- struct {
-				index int
-				saved bool
-			}{index: index, saved: save != nil}
+				index  int
+				saved  bool
+				saveId uint64
+			}{index: index, saved: save != nil, saveId: saveId}
 		}(i, content.ID)
 	}
 
@@ -206,14 +241,17 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	for i := 0; i < len(*contents); i++ {
-		select {
-		case likeResult := <-likeChan:
-			response[likeResult.index].Content = (*contents)[likeResult.index]
-			response[likeResult.index].IsLiked = likeResult.liked
-		case saveResult := <-saveChan:
-			response[saveResult.index].Content = (*contents)[saveResult.index]
-			response[saveResult.index].IsSaved = saveResult.saved
-		}
+		likeResult := <-likeChan
+		response[likeResult.index].Content = (*contents)[likeResult.index]
+		response[likeResult.index].Like.IsLiked = likeResult.liked
+		response[likeResult.index].Like.LikeId = likeResult.likeId
+	}
+
+	for i := 0; i < len(*contents); i++ {
+		saveResult := <-saveChan
+		response[saveResult.index].Content = (*contents)[saveResult.index]
+		response[saveResult.index].Save.IsSaved = saveResult.saved
+		response[saveResult.index].Save.SaveId = saveResult.saveId
 	}
 
 	utils.SuccessResponse(w, response)
@@ -248,21 +286,43 @@ func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
 
 	var wg sync.WaitGroup
 
-	likeChan := make(chan bool, 1)
-	saveChan := make(chan bool, 1)
+	likeChan := make(chan Like, 1)
+	saveChan := make(chan Save, 1)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		like, _ := h.likeService.GetOneLike(userId, contentId)
-		likeChan <- like != nil
+
+		var likeId uint64
+		if like != nil {
+			likeId = like.ID
+		} else {
+			likeId = 0
+		}
+
+		likeChan <- Like{
+			IsLiked: like != nil,
+			LikeId:  likeId,
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		save, _ := h.saveService.GetOneSave(userId, contentId)
-		saveChan <- save != nil
+
+		var saveId uint64
+		if save != nil {
+			saveId = save.ID
+		} else {
+			saveId = 0
+		}
+
+		saveChan <- Save{
+			IsSaved: save != nil,
+			SaveId:  saveId,
+		}
 	}()
 
 	go func() {
@@ -271,8 +331,8 @@ func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
 		close(saveChan)
 	}()
 
-	response.IsLiked = <-likeChan
-	response.IsSaved = <-saveChan
+	response.Like = <-likeChan
+	response.Save = <-saveChan
 
 	utils.SuccessResponse(w, response)
 }
@@ -294,17 +354,19 @@ func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	response := make([]ContentResponse, len(*contents))
 	var wg sync.WaitGroup
+	response := make([]ContentResponse, len(*contents))
 
 	likeChan := make(chan struct {
-		index   int
-		isLiked bool
+		index  int
+		liked  bool
+		likeId uint64
 	}, len(*contents))
 
 	saveChan := make(chan struct {
-		index   int
-		isSaved bool
+		index  int
+		saved  bool
+		saveId uint64
 	}, len(*contents))
 
 	for i, content := range *contents {
@@ -315,10 +377,18 @@ func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Reques
 
 			like, _ := h.likeService.GetOneLike(userId, contentId)
 
+			var likeId uint64
+			if like != nil {
+				likeId = like.ID
+			} else {
+				likeId = 0
+			}
+
 			likeChan <- struct {
-				index   int
-				isLiked bool
-			}{index: i, isLiked: like != nil}
+				index  int
+				liked  bool
+				likeId uint64
+			}{index: index, liked: like != nil, likeId: likeId}
 		}(i, content.ID)
 
 		go func(index int, contentId uint64) {
@@ -326,10 +396,18 @@ func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Reques
 
 			save, _ := h.saveService.GetOneSave(userId, contentId)
 
+			var saveId uint64
+			if save != nil {
+				saveId = save.ID
+			} else {
+				saveId = 0
+			}
+
 			saveChan <- struct {
-				index   int
-				isSaved bool
-			}{index: i, isSaved: save != nil}
+				index  int
+				saved  bool
+				saveId uint64
+			}{index: index, saved: save != nil, saveId: saveId}
 		}(i, content.ID)
 	}
 
@@ -340,14 +418,17 @@ func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Reques
 	}()
 
 	for i := 0; i < len(*contents); i++ {
-		select {
-		case likeResult := <-likeChan:
-			response[likeResult.index].Content = (*contents)[likeResult.index]
-			response[likeResult.index].IsLiked = likeResult.isLiked
-		case saveResult := <-saveChan:
-			response[saveResult.index].Content = (*contents)[saveResult.index]
-			response[saveResult.index].IsSaved = saveResult.isSaved
-		}
+		likeResult := <-likeChan
+		response[likeResult.index].Content = (*contents)[likeResult.index]
+		response[likeResult.index].Like.IsLiked = likeResult.liked
+		response[likeResult.index].Like.LikeId = likeResult.likeId
+	}
+
+	for i := 0; i < len(*contents); i++ {
+		saveResult := <-saveChan
+		response[saveResult.index].Content = (*contents)[saveResult.index]
+		response[saveResult.index].Save.IsSaved = saveResult.saved
+		response[saveResult.index].Save.SaveId = saveResult.saveId
 	}
 
 	utils.SuccessResponse(w, response)
