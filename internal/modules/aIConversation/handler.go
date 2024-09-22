@@ -43,13 +43,8 @@ func (h *Handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
-
-	conversation, err := h.aIConversationService.GetConversation(userId)
-
-	if err != nil {
-		utils.ErrorResponse(w, err, http.StatusInternalServerError)
-		return
-	}
+	
+	conversation, _ := h.aIConversationService.GetConversation(userId)
 
 	utils.SuccessResponse(w, conversation)
 }

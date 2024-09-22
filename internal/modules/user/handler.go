@@ -410,3 +410,36 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 
 	utils.SuccessResponse(w, resp)
 }
+
+func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	email := utils.GetPathParam(r, "email", "string", &err).(string)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	otp, err := utils.GenerateOtp()
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = utils.SendEmailOTP(email, otp)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	resp := struct {
+		Message string `json:"message"`
+	}{
+		Message: "request success",
+	}
+
+	utils.SuccessResponse(w, resp)
+}
