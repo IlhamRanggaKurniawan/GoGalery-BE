@@ -29,7 +29,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	userRepository := user.NewUserRepository(s.DB)
 	userService := user.NewUserService(userRepository)
-	userHandler := user.NewHandler(userService, s.S3Client, s.BucketName)
+	userHandler := user.NewHandler(userService, s.S3Client, s.BucketName, s.Redis)
 
 	commentRepository := comment.NewContentRepository(s.DB)
 	commentService := comment.NewContentService(commentRepository)
@@ -88,7 +88,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("DELETE /v1/user/{userId}/logout", userHandler.Logout)
 	mux.HandleFunc("DELETE /v1/user/{userId}", userHandler.DeleteUser)
 	mux.HandleFunc("GET /v1/token", userHandler.GetToken)
-	mux.HandleFunc("POST /v1/password/{email}", userHandler.ForgotPassword)
+	mux.HandleFunc("POST /v1/otp/{email}", userHandler.SendOTPEmail)
+	mux.HandleFunc("PATCH /v1/password/{userId}", userHandler.ForgotPassword)
 
 	mux.HandleFunc("POST /v1/content", contentHandler.UploadContent)
 	mux.HandleFunc("GET /v1/contents/{userId}", contentHandler.GetAllContent)

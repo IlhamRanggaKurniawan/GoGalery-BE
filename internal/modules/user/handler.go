@@ -6,15 +6,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/redis/go-redis/v9"
 )
 
 type Handler struct {
 	userService UserService
 	S3Client    *s3.Client
 	BucketName  string
+	Redis       *redis.Client
 }
 
 type input struct {
@@ -24,6 +27,7 @@ type input struct {
 	ConfirmPassword string `json:"confirmPassword"`
 	Bio             string `json:"bio"`
 	ProfileUrl      string `json:"profileUrl"`
+	OTP             string `json:"otp"`
 }
 
 type authenticationRes struct {
@@ -31,11 +35,12 @@ type authenticationRes struct {
 	AccessToken string
 }
 
-func NewHandler(userService UserService, s3Client *s3.Client, bucketName string) Handler {
+func NewHandler(userService UserService, s3Client *s3.Client, bucketName string, Redis *redis.Client) Handler {
 	return Handler{
 		userService: userService,
 		S3Client:    s3Client,
 		BucketName:  bucketName,
+		Redis:       Redis,
 	}
 }
 
@@ -411,13 +416,26 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 	utils.SuccessResponse(w, resp)
 }
 
-func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SendOTPEmail(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	email := utils.GetPathParam(r, "email", "string", &err).(string)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	data, err := database.GetData(h.Redis, email)
+
+	resp := struct {
+		Message string `json:"message"`
+	}{
+		Message: "request success",
+	}
+
+	if data != "" {
+		utils.SuccessResponse(w, resp)
 		return
 	}
 
@@ -435,10 +453,65 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = database.SetData(h.Redis, email, otp, 300)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.SuccessResponse(w, resp)
+}
+
+func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	var input input
+
+	err = json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	storedOtp, _ := database.GetData(h.Redis, input.Email)
+
+	if storedOtp == "" {
+		utils.ErrorResponse(w, fmt.Errorf("OTP was expired"), http.StatusBadRequest)
+		return
+	}
+
+	if input.OTP != storedOtp {
+		utils.ErrorResponse(w, fmt.Errorf("invalid OTP"), http.StatusBadRequest)
+		return
+	}
+
+	_, err = h.userService.UpdateUser(userId, nil, nil, &input.Password, nil)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = database.SetData(h.Redis, input.Email, "", 1)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	resp := struct {
 		Message string `json:"message"`
 	}{
-		Message: "request success",
+		Message: "Password changed successfully",
 	}
 
 	utils.SuccessResponse(w, resp)
