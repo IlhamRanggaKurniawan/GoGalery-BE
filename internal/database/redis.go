@@ -9,7 +9,7 @@ import (
 
 func NewRedis() *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "redis-server:6379",
 		Password: "",
 		DB:       0,
 	})

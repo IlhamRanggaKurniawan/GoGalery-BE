@@ -1,0 +1,13 @@
+{
+    "proxies": {
+        "default": {
+            "httpProxy": "http://your-proxy:port",
+            "httpsProxy": "http://your-proxy:port",
+            "noProxy": "localhost,127.0.0.1"
+        }
+    },
+    "dns": [
+        "8.8.8.8",
+        "8.8.4.4"
+    ]
+}

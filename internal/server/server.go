@@ -26,6 +26,8 @@ func NewServer(client *s3.Client, bucketName string) *http.Server {
 	db := database.New()
 	redis := database.NewRedis()
 
+	fmt.Println(db)
+
 	NewServer := &Server{
 		port:       port,
 		DB:         db,
