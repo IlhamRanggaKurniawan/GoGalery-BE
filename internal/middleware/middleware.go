@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
@@ -63,9 +64,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 func CorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		frontEndOrigin :=  os.Getenv("FRONT_END_ORIGIN")
+
 		allowedOrigins := []string{
 			"https://connect-verse-seven.vercel.app",
-			"http://localhost:3000",
+			frontEndOrigin,
 			"",
 		}
 

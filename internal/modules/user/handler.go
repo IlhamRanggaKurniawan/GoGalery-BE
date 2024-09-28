@@ -433,6 +433,8 @@ func (h *Handler) SendOTPEmail(w http.ResponseWriter, r *http.Request) {
 	}{
 		Message: "request success",
 	}
+	
+	fmt.Println(data)
 
 	if data != "" {
 		utils.SuccessResponse(w, resp)

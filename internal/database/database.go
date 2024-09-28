@@ -16,13 +16,13 @@ func New() *gorm.DB {
 	var db *gorm.DB
 	var err error
 
-	for attempts := 0; attempts < 5; attempts++ { // Retry up to 5 times
+	for attempts := 0; attempts < 5; attempts++ {
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err == nil {
-			break // Successful connection
+			break
 		}
 		fmt.Printf("Error connecting to database: %s. Retrying in 2 seconds...\n", err)
-		time.Sleep(2 * time.Second) // Delay before retrying
+		time.Sleep(2 * time.Second)
 	}
 
 	if err != nil {
