@@ -18,6 +18,8 @@
 go.work
 tmp/
 
+nginx.dev.conf
+
 # IDE specific files
 .vscode
 .idea

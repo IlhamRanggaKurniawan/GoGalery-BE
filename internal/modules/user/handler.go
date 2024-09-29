@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database"
@@ -34,6 +35,8 @@ type authenticationRes struct {
 	User        entity.User
 	AccessToken string
 }
+
+var appEnv = os.Getenv("APP_ENV")
 
 func NewHandler(userService UserService, s3Client *s3.Client, bucketName string, Redis *redis.Client) Handler {
 	return Handler{
@@ -85,6 +88,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    refreshToken,
 		Expires:  time.Now().Add(24 * time.Hour * 7),
+		Secure: appEnv == "production",
 		HttpOnly: true,
 		Path:     "/",
 	})
@@ -93,6 +97,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    accessToken,
 		Expires:  time.Now().Add(5 * time.Minute),
+		Secure: appEnv == "production",
 		HttpOnly: true,
 		Path:     "/",
 	})
@@ -148,6 +153,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    refreshToken,
 		Expires:  time.Now().Add(24 * time.Hour * 7),
+		Secure: appEnv == "production",
 		HttpOnly: true,
 		Path:     "/",
 	})
@@ -156,6 +162,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    accessToken,
 		Expires:  time.Now().Add(5 * time.Minute),
+		Secure: appEnv == "production",
 		HttpOnly: true,
 		Path:     "/",
 	})
@@ -189,6 +196,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Expires:  time.Now().Add(-1),
 		HttpOnly: true,
+		Secure: appEnv == "production",
 		Path:     "/",
 	})
 
@@ -197,6 +205,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Expires:  time.Now().Add(-1),
 		HttpOnly: true,
+		Secure: appEnv == "production",
 		Path:     "/",
 	})
 
@@ -355,6 +364,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
+		Secure: appEnv == "production",
 		HttpOnly: true,
 		Path:     "/",
 	})
@@ -363,6 +373,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
+		Secure: appEnv == "production",
 		HttpOnly: true,
 		Path:     "/",
 	})
@@ -403,6 +414,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    accessToken,
 		Expires:  time.Now().Add(5 * time.Minute),
+		Secure: appEnv == "production",
 		HttpOnly: true,
 		Path:     "/",
 	})
