@@ -89,7 +89,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("DELETE /v1/user/{userId}", userHandler.DeleteUser)
 	mux.HandleFunc("GET /v1/token", userHandler.GetToken)
 	mux.HandleFunc("POST /v1/otp/{email}", userHandler.SendOTPEmail)
-	mux.HandleFunc("PATCH /v1/password/{userId}", userHandler.ForgotPassword)
+	mux.HandleFunc("PATCH /v1/password/{email}", userHandler.ForgotPassword)
 
 	mux.HandleFunc("POST /v1/content", contentHandler.UploadContent)
 	mux.HandleFunc("GET /v1/contents/{userId}", contentHandler.GetAllContent)

@@ -18,7 +18,6 @@
 go.work
 tmp/
 
-nginx.dev.conf
 
 # IDE specific files
 .vscode
@@ -30,3 +29,6 @@ nginx.dev.conf
 # Project build
 main
 *templ.go
+
+nginx*
+

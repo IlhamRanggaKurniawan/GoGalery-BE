@@ -11,6 +11,7 @@ type UserRepository interface {
 	FindAllByUsername(username string) (*[]entity.User, error)
 	FindOneByUsername(username string) (*entity.User, error)
 	FindOneById(id uint64) (*entity.User, error)
+	FindOneByEmail(email string) (*entity.User, error)
 	Update(user *entity.User) (*entity.User, error)
 	DeleteOne(id uint64) error
 }
@@ -76,6 +77,18 @@ func (r *userRepository) FindOneById(id uint64) (*entity.User, error) {
 	var user entity.User
 
 	err := r.db.Where("id = ?", id).Take(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *userRepository) FindOneByEmail(email string) (*entity.User, error) {
+	var user entity.User
+
+	err := r.db.Where("email = ?", email).Take(&user).Error
 
 	if err != nil {
 		return nil, err

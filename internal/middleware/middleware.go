@@ -37,6 +37,16 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		if strings.HasPrefix(r.URL.Path, "/v1/otp/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if strings.HasPrefix(r.URL.Path, "/v1/password/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		token := r.Header.Get("Authorization")
 
 		if token == "" {
@@ -64,10 +74,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 func CorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		frontEndOrigin :=  os.Getenv("FRONT_END_ORIGIN")
+		frontEndOrigin := os.Getenv("FRONT_END_ORIGIN")
 
 		allowedOrigins := []string{
-			"https://connect-verse-seven.vercel.app",
 			frontEndOrigin,
 			"",
 		}

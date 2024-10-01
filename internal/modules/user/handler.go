@@ -19,6 +19,7 @@ type Handler struct {
 	S3Client    *s3.Client
 	BucketName  string
 	Redis       *redis.Client
+	SameSite    http.SameSite 
 }
 
 type input struct {
@@ -39,11 +40,20 @@ type authenticationRes struct {
 var appEnv = os.Getenv("APP_ENV")
 
 func NewHandler(userService UserService, s3Client *s3.Client, bucketName string, Redis *redis.Client) Handler {
+	var sameSite http.SameSite
+
+	if appEnv == "production" {
+		sameSite = http.SameSiteNoneMode
+	} else {
+		sameSite = http.SameSiteLaxMode
+	}
+
 	return Handler{
 		userService: userService,
 		S3Client:    s3Client,
 		BucketName:  bucketName,
 		Redis:       Redis,
+		SameSite: sameSite,
 	}
 }
 
@@ -90,6 +100,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour * 7),
 		Secure: appEnv == "production",
 		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -99,6 +110,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure: appEnv == "production",
 		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -155,6 +167,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour * 7),
 		Secure: appEnv == "production",
 		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -164,6 +177,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure: appEnv == "production",
 		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -195,8 +209,9 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
-		HttpOnly: true,
 		Secure: appEnv == "production",
+		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -204,8 +219,9 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
-		HttpOnly: true,
 		Secure: appEnv == "production",
+		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -366,6 +382,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure: appEnv == "production",
 		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -375,6 +392,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure: appEnv == "production",
 		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -416,6 +434,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure: appEnv == "production",
 		HttpOnly: true,
+		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
@@ -446,8 +465,6 @@ func (h *Handler) SendOTPEmail(w http.ResponseWriter, r *http.Request) {
 		Message: "request success",
 	}
 	
-	fmt.Println(data)
-
 	if data != "" {
 		utils.SuccessResponse(w, resp)
 		return
@@ -480,7 +497,7 @@ func (h *Handler) SendOTPEmail(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	email := utils.GetPathParam(r, "email", "string", &err).(string)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -496,7 +513,7 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storedOtp, _ := database.GetData(h.Redis, input.Email)
+	storedOtp, _ := database.GetData(h.Redis, email)
 
 	if storedOtp == "" {
 		utils.ErrorResponse(w, fmt.Errorf("OTP was expired"), http.StatusBadRequest)
@@ -508,14 +525,14 @@ func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.userService.UpdateUser(userId, nil, nil, &input.Password, nil)
+	_, err = h.userService.UpdateUserByEmail(email, nil, nil, &input.Password, nil)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	err = database.SetData(h.Redis, input.Email, "", 1)
+	err = database.SetData(h.Redis, email, "", 1)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

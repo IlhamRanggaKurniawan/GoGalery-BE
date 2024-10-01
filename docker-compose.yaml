@@ -42,20 +42,20 @@ services:
     ports:
       - "6379:6379"
 
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    ports:
-      - "443:443"
-      - "80:80"
-    depends_on:
-      - app
-    volumes:
-      - ./nginx.dev.conf:/etc/nginx/nginx.conf
-      - /etc/letsencrypt:/etc/letsencrypt
-      - /var/www/certbot:/var/www/certbot
-    networks:
-      - app_network
+  # nginx:
+  #   image: nginx:latest
+  #   container_name: nginx
+  #   ports:
+  #     - "443:443"
+  #     - "80:80"
+  #   depends_on:
+  #     - app
+  #   volumes:
+  #     - ./nginx.dev.conf:/etc/nginx/nginx.conf
+  #     # - /etc/letsencrypt:/etc/letsencrypt
+  #     # - /var/www/certbot:/var/www/certbot
+  #   networks:
+  #     - app_network
 
 volumes:
   pgdata:

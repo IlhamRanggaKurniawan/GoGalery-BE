@@ -1,7 +1,6 @@
 package user
 
 import (
-
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
@@ -10,6 +9,7 @@ type UserService interface {
 	Register(username string, email string, password string) (*entity.User, error)
 	Login(username string, password string) (*entity.User, error)
 	UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
+	UpdateUserByEmail(email string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
 	FindAllUsersByUsername(username string) (*[]entity.User, error)
 	FindAllMutualUsers(userId uint64) (*[]entity.User, error)
 	FindOneUserByUsername(username string) (*entity.User, error)
@@ -59,6 +59,41 @@ func (s *userService) Login(username string, password string) (*entity.User, err
 func (s *userService) UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
 
 	user, err := s.userRepository.FindOneById(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if bio != nil {
+		user.Bio = bio
+	}
+
+	if profileUrl != nil {
+		user.ProfileUrl = profileUrl
+	}
+
+	if token != nil {
+		user.Token = token
+	}
+
+	if password != nil {
+		hashedPassword, _ := utils.HashPassword(*password)
+
+		user.Password = *hashedPassword
+	}
+
+	user, err = s.userRepository.Update(user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *userService) UpdateUserByEmail(email string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error) {
+
+	user, err := s.userRepository.FindOneByEmail(email)
 
 	if err != nil {
 		return nil, err
