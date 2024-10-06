@@ -26,8 +26,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			"/v1/user",
 			"/v1/user/login",
 			"/v1/token",
-			"/v1/ws/dm",
-			"/v1/ws/gc",
+			"/v1/ws/direct",
+			"/v1/ws/group",
 		}
 
 		for _, route := range unprotectedRoutes {
@@ -78,6 +78,7 @@ func CorsMiddleware(next http.Handler) http.Handler {
 
 		allowedOrigins := []string{
 			frontEndOrigin,
+			"http://localhost:3000",
 			"",
 		}
 

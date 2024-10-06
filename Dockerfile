@@ -1,29 +1,29 @@
 # Development Stage
-FROM golang:1.23-alpine AS development
+# FROM golang:1.23-alpine AS development
 
-# Install air for hot-reloading
-RUN go install github.com/air-verse/air@latest
+# # Install air for hot-reloading
+# RUN go install github.com/air-verse/air@latest
 
-# Set working directory
-WORKDIR /app
+# # Set working directory
+# WORKDIR /app
 
-# Copy go.mod and go.sum
-COPY go.mod go.sum ./
+# # Copy go.mod and go.sum
+# COPY go.mod go.sum ./
 
-# Download Go dependencies
-RUN go mod download
+# # Download Go dependencies
+# RUN go mod download
 
-# Copy the rest of the application code
-COPY . .
+# # Copy the rest of the application code
+# COPY . .
 
-# Expose the port for development
-EXPOSE 8080
+# # Expose the port for development
+# EXPOSE 8080
 
-# Command to run air for development (hot-reload)
-CMD ["air", "-c", ".air.toml"]
+# # Command to run air for development (hot-reload)
+# CMD ["air", "-c", ".air.toml"]
 
 # Production Stage
-FROM golang:1.23-alpine AS production
+FROM golang:1.23-alpine AS development
 
 # Set working directory
 WORKDIR /app

@@ -19,7 +19,7 @@ type Handler struct {
 	S3Client    *s3.Client
 	BucketName  string
 	Redis       *redis.Client
-	SameSite    http.SameSite 
+	SameSite    http.SameSite
 }
 
 type input struct {
@@ -53,7 +53,7 @@ func NewHandler(userService UserService, s3Client *s3.Client, bucketName string,
 		S3Client:    s3Client,
 		BucketName:  bucketName,
 		Redis:       Redis,
-		SameSite: sameSite,
+		SameSite:    sameSite,
 	}
 }
 
@@ -98,7 +98,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    refreshToken,
 		Expires:  time.Now().Add(24 * time.Hour * 7),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -108,7 +108,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    accessToken,
 		Expires:  time.Now().Add(5 * time.Minute),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -165,7 +165,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    refreshToken,
 		Expires:  time.Now().Add(24 * time.Hour * 7),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -175,7 +175,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    accessToken,
 		Expires:  time.Now().Add(5 * time.Minute),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -209,7 +209,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -219,7 +219,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -380,7 +380,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Name:     "RefreshToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -390,7 +390,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -432,7 +432,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		Name:     "AccessToken",
 		Value:    accessToken,
 		Expires:  time.Now().Add(5 * time.Minute),
-		Secure: appEnv == "production",
+		Secure:   appEnv == "production",
 		HttpOnly: true,
 		SameSite: h.SameSite,
 		Path:     "/",
@@ -464,7 +464,7 @@ func (h *Handler) SendOTPEmail(w http.ResponseWriter, r *http.Request) {
 	}{
 		Message: "request success",
 	}
-	
+
 	if data != "" {
 		utils.SuccessResponse(w, resp)
 		return

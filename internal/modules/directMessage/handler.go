@@ -182,11 +182,6 @@ func (h *Handler) GetOneDirectMessageByParticipants(w http.ResponseWriter, r *ht
 
 	directMessage, err := h.directMessageService.GetOneDirectMessageByParticipants(participants)
 
-	if err != nil {
-		utils.ErrorResponse(w, err, http.StatusInternalServerError)
-		return
-	}
-
 	utils.SuccessResponse(w, directMessage)
 }
 
