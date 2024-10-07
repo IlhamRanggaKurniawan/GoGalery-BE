@@ -331,11 +331,6 @@ func (h *Handler) FindAllMutualUsers(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.userService.FindAllMutualUsers(userId)
 
-	if err != nil {
-		utils.ErrorResponse(w, err, http.StatusInternalServerError)
-		return
-	}
-
 	utils.SuccessResponse(w, users)
 }
 

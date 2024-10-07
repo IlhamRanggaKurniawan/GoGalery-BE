@@ -119,7 +119,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("DELETE /v1/message/{messageId}", messageHandler.DeleteMessage)
 
 	mux.HandleFunc("POST /v1/direct", directMessageHandler.CreateDirectMessage)
-	mux.HandleFunc("/v1/ws/direct", directMessageHandler.HandleWebSocket)
+	mux.HandleFunc("/ws/direct", directMessageHandler.HandleWebSocket)
 	mux.HandleFunc("GET /v1/directs/{userId}", directMessageHandler.GetAllDirectMessages)
 	mux.HandleFunc("GET /v1/direct", directMessageHandler.GetOneDirectMessageByParticipants)
 	mux.HandleFunc("GET /v1/direct/{dmId}", directMessageHandler.GetOneDirectMessage)
@@ -127,7 +127,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	mux.HandleFunc("POST /v1/group", groupChatHandler.CreateGroupChat)
 	mux.HandleFunc("POST /v1/group/members/{groupId}", groupChatHandler.AddMembers)
-	mux.HandleFunc("/v1/ws/group", groupChatHandler.HandleWebSocket)
+	mux.HandleFunc("/ws/group", groupChatHandler.HandleWebSocket)
 	mux.HandleFunc("GET /v1/groups/{userId}", groupChatHandler.GetAllGroupChats)
 	mux.HandleFunc("GET /v1/group/{groupId}", groupChatHandler.GetOneGroupChat)
 	mux.HandleFunc("PATCH /v1/group/{groupId}", groupChatHandler.UpdateGroupChat)

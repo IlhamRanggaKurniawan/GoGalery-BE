@@ -3,6 +3,7 @@ package groupchat
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/modules/message"
@@ -38,8 +39,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-
-		if origin == "http://localhost:3000" {
+		if origin == os.Getenv("FRONT_END_ORIGIN") {
 			return true
 		} else {
 			return false

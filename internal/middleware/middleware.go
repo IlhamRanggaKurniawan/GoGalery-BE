@@ -26,8 +26,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			"/v1/user",
 			"/v1/user/login",
 			"/v1/token",
-			"/v1/ws/direct",
-			"/v1/ws/group",
+			"/ws/direct",
+			"/ws/group",
 		}
 
 		for _, route := range unprotectedRoutes {
