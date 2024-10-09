@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/server"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -20,7 +21,8 @@ func main() {
 	}
 
 	client := s3.NewFromConfig(cfg)
-	bucketName := "connect-verse-bucket"
+	
+	bucketName := os.Getenv("BUCKET_NAME")
 
 	fmt.Println("S3 Client Region:", cfg.Region)
 

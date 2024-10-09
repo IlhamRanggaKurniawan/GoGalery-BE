@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"gorm.io/gorm"
 )
@@ -34,7 +36,7 @@ func (r *userRepository) Create(username string, email string, password string) 
 	err := r.db.Create(&user).Error
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(`"Username" or "Email" already used`)
 	}
 
 	return &user, nil

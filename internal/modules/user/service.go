@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
@@ -50,7 +52,7 @@ func (s *userService) Login(username string, password string) (*entity.User, err
 	err = utils.ComparePassword(user.Password, password)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("the provided credentials do not match our records")
 	}
 
 	return user, nil

@@ -2,12 +2,17 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
 func ErrorResponse(w http.ResponseWriter, err error, statusCode int) {
-	http.Error(w, fmt.Sprintf("Error: %s", err.Error()), statusCode)
+	response := map[string]string{
+		"error": err.Error(),
+	}
+
+	w.WriteHeader(statusCode)
+
+	json.NewEncoder(w).Encode(response)
 }
 
 func SuccessResponse(w http.ResponseWriter, data interface{}) {
