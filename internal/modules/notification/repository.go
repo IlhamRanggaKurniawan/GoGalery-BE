@@ -1,7 +1,6 @@
 package notification
 
 import (
-
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"gorm.io/gorm"
 )
@@ -24,8 +23,8 @@ func NewNotificationRepository(db *gorm.DB) NotificationRepository {
 func (r *notificationRepository) Create(receiverId uint64, triggerId uint64, content string) (*entity.Notification, error) {
 	notification := entity.Notification{
 		Content:    content,
-		ReceiverID: receiverId,
-		TriggerID:  triggerId,
+		ReceiverId: receiverId,
+		TriggerId:  triggerId,
 	}
 
 	err := r.db.Create(&notification).Error

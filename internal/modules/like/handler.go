@@ -12,9 +12,9 @@ type Handler struct {
 }
 
 type input struct {
-	ID        uint64 `json:"id"`
-	UserID    uint64 `json:"userId"`
-	ContentID uint64 `json:"contentId"`
+	Id        uint64 `json:"id"`
+	UserId    uint64 `json:"userId"`
+	ContentId uint64 `json:"contentId"`
 }
 
 func NewHandler(likeContentService LikeContentService) Handler {
@@ -40,7 +40,7 @@ func (h *Handler) LikeContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	like, err := h.likeContentService.LikeContent(input.UserID, contentId)
+	like, err := h.likeContentService.LikeContent(input.UserId, contentId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

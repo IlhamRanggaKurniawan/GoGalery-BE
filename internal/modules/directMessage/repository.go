@@ -29,8 +29,8 @@ func (r *directMessageRepository) Create(participants []uint64) (*entity.DirectM
 	}
 
 	directMessage := entity.DirectMessage{
-		Participant1ID: participants[0],
-		Participant2ID: participants[1],
+		Participant1Id: participants[0],
+		Participant2Id: participants[1],
 	}
 
 	err := r.db.Create(&directMessage).Error

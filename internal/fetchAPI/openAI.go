@@ -15,10 +15,10 @@ type Message struct {
 }
 
 type Choice struct {
-	Index        int      `json:"index"`
+	Index        int     `json:"index"`
 	Message      Message `json:"message"`
-	Logprobs     *string  `json:"logprobs"`
-	FinishReason string   `json:"finish_reason"`
+	Logprobs     *string `json:"logprobs"`
+	FinishReason string  `json:"finish_reason"`
 }
 
 type Usage struct {
@@ -28,7 +28,7 @@ type Usage struct {
 }
 
 type OpenAIResponse struct {
-	ID                string   `json:"id"`
+	Id                string   `json:"id"`
 	Object            string   `json:"object"`
 	Created           int64    `json:"created"`
 	Model             string   `json:"model"`
@@ -38,16 +38,16 @@ type OpenAIResponse struct {
 }
 
 type RequestBody struct {
-	Model      string     `json:"model"`
+	Model      string    `json:"model"`
 	Messages   []Message `json:"messages"`
-	Max_tokens uint64       `json:"max_tokens"`
+	Max_tokens uint64    `json:"max_tokens"`
 }
 
 func FetchOpenAI(prompt []Message) (OpenAIResponse, error) {
 
 	requestBody := RequestBody{
-		Model:    "gpt-4o-mini-2024-07-18",
-		Messages: prompt,
+		Model:      "gpt-4o-mini-2024-07-18",
+		Messages:   prompt,
 		Max_tokens: 1000,
 	}
 

@@ -18,13 +18,13 @@ type Handler struct {
 }
 
 type connection struct {
-	UserID  uint64
+	UserId  uint64
 	Conn    *websocket.Conn
-	GroupID uint64
+	GroupId uint64
 }
 
 type input struct {
-	UserID     uint64 `json:"userId"`
+	UserId     uint64 `json:"userId"`
 	Name       string `json:"name"`
 	Members    []entity.User
 	PictureUrl string `json:"pictureUrl"`
@@ -58,64 +58,64 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	groupID := utils.GetQueryParam(r, "groupId", "number", &err).(uint64)
+	groupId := utils.GetQueryParam(r, "groupId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	userID := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	existingConnections := connections[groupID]
+	existingConnections := connections[groupId]
 	for _, existingConn := range existingConnections {
-		if existingConn.UserID == userID {
+		if existingConn.UserId == userId {
 			existingConn.Conn.Close()
-			connections[groupID] = removeConnection(groupID, existingConn)
+			connections[groupId] = removeConnection(groupId, existingConn)
 			break
 		}
 	}
 
 	newConn := &connection{
-		UserID:  userID,
+		UserId:  userId,
 		Conn:    conn,
-		GroupID: groupID,
+		GroupId: groupId,
 	}
-	connections[groupID] = append(connections[groupID], newConn)
+	connections[groupId] = append(connections[groupId], newConn)
 
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			connections[groupID] = removeConnection(groupID, newConn)
+			connections[groupId] = removeConnection(groupId, newConn)
 			return
 		}
 
-		newMessage, err := h.messageRepository.Create(userID, 0, groupID, string(message))
+		newMessage, err := h.messageRepository.Create(userId, 0, groupId, string(message))
 		if err != nil {
 			utils.ErrorResponse(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		broadcastMessage(groupID, newMessage)
+		broadcastMessage(groupId, newMessage)
 	}
 }
 
-func broadcastMessage(groupID uint64, newMessage *entity.Message) {
-	for _, conn := range connections[groupID] {
+func broadcastMessage(groupId uint64, newMessage *entity.Message) {
+	for _, conn := range connections[groupId] {
 		err := conn.Conn.WriteJSON(newMessage)
 		if err != nil {
-			connections[groupID] = removeConnection(groupID, conn)
+			connections[groupId] = removeConnection(groupId, conn)
 		}
 	}
 }
 
-func removeConnection(groupID uint64, connToRemove *connection) []*connection {
-	conns := connections[groupID]
+func removeConnection(groupId uint64, connToRemove *connection) []*connection {
+	conns := connections[groupId]
 	for i, conn := range conns {
 		if conn == connToRemove {
 			return append(conns[:i], conns[i+1:]...)

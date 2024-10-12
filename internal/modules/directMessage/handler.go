@@ -17,14 +17,14 @@ type Handler struct {
 }
 
 type input struct {
-	UserID       uint64   `json:"userId"`
+	UserId       uint64   `json:"userId"`
 	Participants []uint64 `json:"Participants"`
 }
 
 type connection struct {
-	UserID uint64
+	UserId uint64
 	Conn   *websocket.Conn
-	DmID   uint64
+	DmId   uint64
 }
 
 func NewHandler(directMessageService DirectMessageService, messageRepository message.MessageRepository) Handler {
@@ -54,52 +54,52 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	dmID := utils.GetQueryParam(r, "dmId", "number", &err).(uint64)
+	dmId := utils.GetQueryParam(r, "dmId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	userID := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	existingConnections := connections[dmID]
+	existingConnections := connections[dmId]
 
 	for _, existingConn := range existingConnections {
-		if existingConn.UserID == userID {
+		if existingConn.UserId == userId {
 			existingConn.Conn.Close()
-			connections[dmID] = removeConnection(dmID, existingConn)
+			connections[dmId] = removeConnection(dmId, existingConn)
 			break
 		}
 	}
 
 	newConn := &connection{
-		UserID: userID,
+		UserId: userId,
 		Conn:   conn,
-		DmID:   dmID,
+		DmId:   dmId,
 	}
 
-	connections[dmID] = append(connections[dmID], newConn)
+	connections[dmId] = append(connections[dmId], newConn)
 
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			connections[dmID] = removeConnection(dmID, newConn)
+			connections[dmId] = removeConnection(dmId, newConn)
 			return
 		}
 
-		newMessage, err := h.messageRepository.Create(userID, dmID, 0, string(message))
+		newMessage, err := h.messageRepository.Create(userId, dmId, 0, string(message))
 		if err != nil {
 			utils.ErrorResponse(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		broadcastMessage(dmID, newMessage)
+		broadcastMessage(dmId, newMessage)
 	}
 }
 

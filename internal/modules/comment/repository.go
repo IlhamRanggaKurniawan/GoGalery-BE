@@ -23,8 +23,8 @@ func NewContentRepository(db *gorm.DB) CommentRepository {
 
 func (r *commentRepository) Create(userId uint64, contentId uint64, text string) (*entity.Comment, error) {
 	comment := entity.Comment{
-		UserID:    userId,
-		ContentID: contentId,
+		UserId:    userId,
+		ContentId: contentId,
 		Comment:   text,
 	}
 	err := r.db.Create(&comment).Error

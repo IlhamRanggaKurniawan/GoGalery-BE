@@ -12,8 +12,8 @@ type Handler struct {
 }
 
 type input struct {
-	ContentID uint64 `json:"contentId"`
-	UserID    uint64 `json:"userId"`
+	ContentId uint64 `json:"contentId"`
+	UserId    uint64 `json:"userId"`
 	Message   string `json:"message"`
 }
 
@@ -40,7 +40,7 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := h.commentService.SendComment(input.UserID, contentId, input.Message)
+	content, err := h.commentService.SendComment(input.UserId, contentId, input.Message)
 
 	utils.SuccessResponse(w, content)
 }

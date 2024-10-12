@@ -2,8 +2,9 @@ package save
 
 import (
 	"encoding/json"
-	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 	"net/http"
+
+	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
 )
 
 type Handler struct {
@@ -11,8 +12,8 @@ type Handler struct {
 }
 
 type input struct {
-	UserID    uint64 `json:"userId"`
-	ContentID uint64 `json:"contentId"`
+	UserId    uint64 `json:"userId"`
+	ContentId uint64 `json:"contentId"`
 }
 
 func NewHandler(saveContentService SaveContentService) Handler {
@@ -38,7 +39,7 @@ func (h *Handler) SaveContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	save, err := h.saveContentService.SaveContent(input.UserID, contentId)
+	save, err := h.saveContentService.SaveContent(input.UserId, contentId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

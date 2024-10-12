@@ -13,9 +13,9 @@ type Handler struct {
 }
 
 type input struct {
-	UserID      uint64 `json:"userId"`
-	FollowerID  uint64 `json:"followerId"`
-	FollowingID uint64 `json:"followingId"`
+	UserId      uint64 `json:"userId"`
+	FollowerId  uint64 `json:"followerId"`
+	FollowingId uint64 `json:"followingId"`
 }
 
 func NewHandler(followService FollowService) Handler {
@@ -32,7 +32,7 @@ func (h *Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	follow, err := h.followService.followUser(input.FollowerID, input.FollowingID)
+	follow, err := h.followService.followUser(input.FollowerId, input.FollowingId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

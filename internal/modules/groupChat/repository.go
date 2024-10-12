@@ -7,7 +7,7 @@ import (
 
 type GroupChatRepository interface {
 	Create(name string, members []entity.User) (*entity.GroupChat, error)
-	AddMembers(groupChatID uint64, newMembers []entity.User) (*entity.GroupChat, error)
+	AddMembers(groupChatId uint64, newMembers []entity.User) (*entity.GroupChat, error)
 	FindAll(userId uint64) (*[]entity.GroupChat, error)
 	FindOne(id uint64) (*entity.GroupChat, error)
 	Update(id uint64, pictureUrl string) (*entity.GroupChat, error)
@@ -38,10 +38,10 @@ func (r *groupChatRepository) Create(name string, participants []entity.User) (*
 	return &groupChat, nil
 }
 
-func (r *groupChatRepository) AddMembers(groupChatID uint64, newMembers []entity.User) (*entity.GroupChat, error) {
+func (r *groupChatRepository) AddMembers(groupChatId uint64, newMembers []entity.User) (*entity.GroupChat, error) {
 	var groupChat entity.GroupChat
 
-	err := r.db.Preload("Members").Where("id = ?", groupChatID).Take(&groupChat).Error
+	err := r.db.Preload("Members").Where("id = ?", groupChatId).Take(&groupChat).Error
 
 	if err != nil {
 		return nil, err
@@ -49,11 +49,11 @@ func (r *groupChatRepository) AddMembers(groupChatID uint64, newMembers []entity
 
 	existingMembers := make(map[uint64]bool)
 	for _, member := range groupChat.Members {
-		existingMembers[member.ID] = true
+		existingMembers[member.Id] = true
 	}
 
 	for _, newMember := range newMembers {
-		if !existingMembers[newMember.ID] {
+		if !existingMembers[newMember.Id] {
 			groupChat.Members = append(groupChat.Members, newMember)
 		}
 	}
@@ -121,7 +121,7 @@ func (r *groupChatRepository) LeaveGroup(userId uint64, groupId uint64) error {
 		return err
 	}
 
-	err = r.db.Model(&groupChat).Association("Members").Delete(&entity.User{ID: userId})
+	err = r.db.Model(&groupChat).Association("Members").Delete(&entity.User{Id: userId})
 
 	if err != nil {
 		return err

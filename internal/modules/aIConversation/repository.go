@@ -21,7 +21,7 @@ func NewAIConversationRepository(db *gorm.DB) AIConversationRepository {
 
 func (r *aIConversationRepository) Create(userId uint64) (*entity.AIConversation, error) {
 	message := entity.AIConversation{
-		UserID: userId,
+		UserId: userId,
 	}
 
 	err := r.db.Create(&message).Error

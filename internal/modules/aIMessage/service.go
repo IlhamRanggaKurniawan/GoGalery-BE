@@ -6,7 +6,7 @@ import (
 )
 
 type AIMessageService interface {
-	SendMessage(senderId uint64, conversationID uint64, prompt []fetchapi.Message) (*entity.AIMessage, error)
+	SendMessage(senderId uint64, conversationId uint64, prompt []fetchapi.Message) (*entity.AIMessage, error)
 	UpdateMessage(id uint64, message string) (*entity.AIMessage, error)
 	DeleteMessage(id uint64) error
 }
@@ -21,7 +21,7 @@ func NewAIMessageService(aIMessageRepository AIMessageRepository) AIMessageServi
 	}
 }
 
-func (s *aIMessageService) SendMessage(senderId uint64, conversationID uint64, prompt []fetchapi.Message) (*entity.AIMessage, error) {
+func (s *aIMessageService) SendMessage(senderId uint64, conversationId uint64, prompt []fetchapi.Message) (*entity.AIMessage, error) {
 
 	response, err := fetchapi.FetchOpenAI(prompt)
 
@@ -29,7 +29,7 @@ func (s *aIMessageService) SendMessage(senderId uint64, conversationID uint64, p
 		return nil, err
 	}
 
-	aIMessage, err := s.aIMessageRepository.Create(senderId, conversationID, prompt[len(prompt)-1].Content, response.Choices[0].Message.Content)
+	aIMessage, err := s.aIMessageRepository.Create(senderId, conversationId, prompt[len(prompt)-1].Content, response.Choices[0].Message.Content)
 
 	if err != nil {
 		return nil, err

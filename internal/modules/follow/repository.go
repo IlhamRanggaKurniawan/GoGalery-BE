@@ -25,8 +25,8 @@ func NewFollowRepository(db *gorm.DB) FollowRepository {
 
 func (r *followRepository) Create(followerId uint64, followingId uint64) (*entity.Follow, error) {
 	follow := entity.Follow{
-		FollowerID:  followerId,
-		FollowingID: followingId,
+		FollowerId:  followerId,
+		FollowingId: followingId,
 	}
 
 	err := r.db.Create(&follow).Error

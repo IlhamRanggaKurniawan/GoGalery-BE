@@ -80,14 +80,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
+	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.Id, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
+	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.Id, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -114,7 +114,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	user, err = h.userService.UpdateUser(user.ID, nil, nil, nil, &refreshToken)
+	user, err = h.userService.UpdateUser(user.Id, nil, nil, nil, &refreshToken)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -147,14 +147,14 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
+	accessToken, err := utils.GenerateAccessToken(user.Username, user.Email, user.Id, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.ID, user.Role, user.ProfileUrl, user.Bio)
+	refreshToken, err := utils.GenerateRefreshToken(user.Username, user.Email, user.Id, user.Role, user.ProfileUrl, user.Bio)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -181,7 +181,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	user, err = h.userService.UpdateUser(user.ID, nil, nil, nil, &refreshToken)
+	user, err = h.userService.UpdateUser(user.Id, nil, nil, nil, &refreshToken)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -416,7 +416,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.ID, token.Role, nil, nil)
+	accessToken, err := utils.GenerateAccessToken(token.Username, token.Email, token.Id, token.Role, nil, nil)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

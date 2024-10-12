@@ -20,7 +20,7 @@ func NewFeedbackRepository(db *gorm.DB) FeedbackRepository {
 
 func (r *feedbackRepository) Create(userId uint64, message string) (*entity.Feedback, error) {
 	feedback := entity.Feedback{
-		UserID:  userId,
+		UserId:  userId,
 		Message: message,
 	}
 

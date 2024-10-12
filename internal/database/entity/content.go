@@ -10,15 +10,15 @@ const (
 )
 
 type Content struct {
-	ID         uint64 `gorm:"primaryKey;autoIncrement"`
-	UploaderID uint64 `gorm:"index"`
-	Uploader   User   `gorm:"foreignKey:UploaderID;constraint:OnDelete:CASCADE;"`
+	Id         uint64 `gorm:"primaryKey;autoIncrement"`
+	UploaderId uint64 `gorm:"index"`
+	Uploader   User   `gorm:"foreignKey:UploaderId;constraint:OnDelete:CASCADE;"`
 	Caption    string
 	URL        string `gorm:"unique"`
 	Type       ContentType
-	Likes      []LikeContent `gorm:"foreignKey:ContentID;constraint:OnDelete:CASCADE;"`
-	Save       []SaveContent `gorm:"foreignKey:ContentID;constraint:OnDelete:CASCADE;"`
-	Comments   []Comment     `gorm:"foreignKey:ContentID;constraint:OnDelete:CASCADE;"`
+	Likes      []LikeContent `gorm:"foreignKey:ContentId;constraint:OnDelete:CASCADE;"`
+	Save       []SaveContent `gorm:"foreignKey:ContentId;constraint:OnDelete:CASCADE;"`
+	Comments   []Comment     `gorm:"foreignKey:ContentId;constraint:OnDelete:CASCADE;"`
 	CreatedAt  time.Time     `gorm:"autoCreateTime"`
 	UpdatedAt  time.Time     `gorm:"autoUpdateTime"`
 }

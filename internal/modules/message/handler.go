@@ -12,10 +12,10 @@ type Handler struct {
 }
 
 type input struct {
-	SenderID        uint64 `json:"senderId"`
+	SenderId        uint64 `json:"senderId"`
 	Message         string `json:"message"`
-	DirectMessageID uint64 `json:"directMessageId"`
-	GroupChatID     uint64 `json:"groupChatId"`
+	DirectMessageId uint64 `json:"directMessageId"`
+	GroupChatId     uint64 `json:"groupChatId"`
 }
 
 func NewHandler(messageService MessageService) Handler {
@@ -41,7 +41,7 @@ func (h *Handler) SendPrivateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := h.messageService.SendMessage(input.SenderID, conversationId, 0, input.Message)
+	message, err := h.messageService.SendMessage(input.SenderId, conversationId, 0, input.Message)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func (h *Handler) SendGroupMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := h.messageService.SendMessage(input.SenderID, 0, conversationId, input.Message)
+	message, err := h.messageService.SendMessage(input.SenderId, 0, conversationId, input.Message)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

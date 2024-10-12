@@ -1,7 +1,6 @@
 package aImessage
 
 import (
-
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
 	"gorm.io/gorm"
 )
@@ -23,10 +22,10 @@ func NewAIMessageRepository(db *gorm.DB) AIMessageRepository {
 
 func (r *aIMessageRepository) Create(senderId uint64, conversationId uint64, message string, response string) (*entity.AIMessage, error) {
 	aIMessage := entity.AIMessage{
-		SenderID: senderId,
-		ConversationID: conversationId,
-		Message:  message,
-		Response: &response,
+		SenderId:       senderId,
+		ConversationId: conversationId,
+		Message:        message,
+		Response:       &response,
 	}
 
 	err := r.db.Create(&aIMessage).Error
@@ -51,7 +50,7 @@ func (r *aIMessageRepository) FindOne(id uint64) (*entity.AIMessage, error) {
 }
 
 func (r *aIMessageRepository) Update(message *entity.AIMessage) (*entity.AIMessage, error) {
-	
+
 	r.db.Save(&message)
 
 	return message, nil

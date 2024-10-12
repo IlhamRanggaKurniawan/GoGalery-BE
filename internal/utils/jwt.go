@@ -14,7 +14,7 @@ var ACCESS_TOKEN_SECRET = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
 type Claims struct {
 	Username   string `json:"username"`
 	Email      string `json:"email"`
-	ID         uint64 `json:"id"`
+	Id         uint64 `json:"id"`
 	Role       string `json:"role"`
 	ProfileUrl string `json:"profileUrl"`
 	Bio        string `json:"bio"`
@@ -27,7 +27,7 @@ func GenerateAccessToken(username string, email string, id uint64, role string, 
 	claims := &Claims{
 		Username:   username,
 		Email:      email,
-		ID:         id,
+		Id:         id,
 		Role:       role,
 		ProfileUrl: "",
 		Bio:        "",
@@ -61,7 +61,7 @@ func GenerateRefreshToken(username string, email string, id uint64, role string,
 	claims := &Claims{
 		Username:   username,
 		Email:      email,
-		ID:         id,
+		Id:         id,
 		Role:       role,
 		ProfileUrl: "",
 		Bio:        "",

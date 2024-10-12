@@ -26,16 +26,16 @@ func (r *messageRepository) Create(senderId uint64, directMessageId uint64, grou
 	if directMessageId != 0 {
 		message = entity.Message{
 			Message:         text,
-			SenderID:        senderId,
-			DirectMessageID: &directMessageId,
-			GroupChatID:     nil,
+			SenderId:        senderId,
+			DirectMessageId: &directMessageId,
+			GroupChatId:     nil,
 		}
 	} else {
 		message = entity.Message{
 			Message:         text,
-			SenderID:        senderId,
-			DirectMessageID: nil,
-			GroupChatID:     &groupChatId,
+			SenderId:        senderId,
+			DirectMessageId: nil,
+			GroupChatId:     &groupChatId,
 		}
 	}
 

@@ -13,7 +13,7 @@ type Handler struct {
 }
 
 type input struct {
-	SenderID       uint64             `json:"senderId"`
+	SenderId       uint64             `json:"senderId"`
 	ConversationId uint64             `json:"conversationId"`
 	Prompt         []fetchAPI.Message `json:"prompt"`
 }
@@ -41,7 +41,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := h.aIMessageService.SendMessage(input.SenderID, conversationId, input.Prompt)
+	message, err := h.aIMessageService.SendMessage(input.SenderId, conversationId, input.Prompt)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

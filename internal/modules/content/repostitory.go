@@ -7,7 +7,7 @@ import (
 
 type ContentRepository interface {
 	Create(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error)
-	FindAll() (*[]entity.Content, error)
+	FindAll(limit int, nextCursor *uint64) (*[]entity.Content, *uint64, error)
 	FindAllByFollowing(userId uint64) (*[]entity.Content, error)
 	FindOneById(id uint64) (*entity.Content, error)
 	Update(content *entity.Content) (*entity.Content, error)
@@ -24,7 +24,7 @@ func NewContentRepository(db *gorm.DB) ContentRepository {
 
 func (r *contentRepository) Create(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error) {
 	content := entity.Content{
-		UploaderID: uploaderId,
+		UploaderId: uploaderId,
 		Caption:    caption,
 		URL:        url,
 		Type:       contentType,
@@ -39,16 +39,28 @@ func (r *contentRepository) Create(uploaderId uint64, caption string, url string
 	return &content, nil
 }
 
-func (r *contentRepository) FindAll() (*[]entity.Content, error) {
+func (r *contentRepository) FindAll(limit int, nextCursor *uint64) (*[]entity.Content, *uint64, error) {
 	var contents []entity.Content
 
-	err := r.db.Preload("Uploader").Find(&contents).Error
+	query := r.db.Preload("Uploader").Order("id ASC").Limit(limit)
 
-	if err != nil {
-		return nil, err
+	if nextCursor != nil {
+		query.Where("id > ?", *nextCursor)
 	}
 
-	return &contents, nil
+	err := query.Find(&contents).Error
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(contents) == limit {
+		nextCursor = &contents[limit-1].Id
+	} else {
+		nextCursor = nil
+	}
+
+	return &contents, nextCursor, nil
 }
 
 func (r *contentRepository) FindOneById(id uint64) (*entity.Content, error) {

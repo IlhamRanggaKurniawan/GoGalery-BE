@@ -5,7 +5,7 @@ import "github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity
 type ContentService interface {
 	UploadContent(uploaderId uint64, caption string, url string, contentType entity.ContentType) (*entity.Content, error)
 	UpdateContent(id uint64, caption string) (*entity.Content, error)
-	GetAllContents() (*[]entity.Content, error)
+	GetAllContents(limit int, nextCursor *uint64) (*[]entity.Content, *uint64, error)
 	GetAllContentsByFollowing(userId uint64) (*[]entity.Content, error)
 	GetOneContent(id uint64) (*entity.Content, error)
 	DeleteContent(id uint64) error
@@ -51,15 +51,15 @@ func (s *contentService) UpdateContent(id uint64, caption string) (*entity.Conte
 	return content, nil
 }
 
-func (s *contentService) GetAllContents() (*[]entity.Content, error) {
+func (s *contentService) GetAllContents(limit int, nextCursor *uint64) (*[]entity.Content, *uint64, error) {
 
-	contents, err := s.contentRepository.FindAll()
+	contents, cursor, err := s.contentRepository.FindAll(limit, nextCursor)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return contents, nil
+	return contents, cursor, nil
 }
 
 func (s *contentService) GetAllContentsByFollowing(userId uint64) (*[]entity.Content, error) {

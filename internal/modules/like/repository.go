@@ -21,8 +21,8 @@ func NewLikeRepository(db *gorm.DB) LikeContentRepository {
 
 func (r *likeContentRepository) Create(userId uint64, contentId uint64) (*entity.LikeContent, error) {
 	like := entity.LikeContent{
-		UserID:    userId,
-		ContentID: contentId,
+		UserId:    userId,
+		ContentId: contentId,
 	}
 
 	err := r.db.Create(&like).Error

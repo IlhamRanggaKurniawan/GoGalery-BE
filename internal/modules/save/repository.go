@@ -22,8 +22,8 @@ func NewSaveRepository(db *gorm.DB) SaveContentRepository {
 
 func (r *saveContentRepository) Create(userId uint64, contentId uint64) (*entity.SaveContent, error) {
 	save := entity.SaveContent{
-		UserID:    userId,
-		ContentID: contentId,
+		UserId:    userId,
+		ContentId: contentId,
 	}
 
 	err := r.db.Create(&save).Error
