@@ -100,6 +100,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour * 7),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -110,6 +111,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -167,6 +169,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour * 7),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -177,6 +180,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -211,6 +215,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -221,6 +226,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -377,6 +383,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -387,6 +394,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -429,6 +437,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
+		Domain:   "gogalery.my.id",
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
