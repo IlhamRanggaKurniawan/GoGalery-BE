@@ -54,14 +54,14 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	dmId := utils.GetQueryParam(r, "dmId", "number", &err).(uint64)
+	dmId := utils.GetPathParam(r, "dmId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -71,7 +71,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	existingConnections := connections[dmId]
 
 	for _, existingConn := range existingConnections {
-		if existingConn.UserId == userId {
+		if existingConn.UserId == user.Id {
 			existingConn.Conn.Close()
 			connections[dmId] = removeConnection(dmId, existingConn)
 			break
@@ -79,7 +79,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newConn := &connection{
-		UserId: userId,
+		UserId: user.Id,
 		Conn:   conn,
 		DmId:   dmId,
 	}
@@ -93,7 +93,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newMessage, err := h.messageRepository.Create(userId, dmId, 0, string(message))
+		newMessage, err := h.messageRepository.Create(user.Id, dmId, 0, string(message))
 		if err != nil {
 			utils.ErrorResponse(w, err, http.StatusInternalServerError)
 			return
@@ -131,6 +131,15 @@ func (h *Handler) CreateDirectMessage(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+	
+	user, err := utils.DecodeAccessToken(r)
+	
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	input.Participants = append(input.Participants, user.Id)
 
 	directMessage, err := h.directMessageService.CreateDirectMessage(input.Participants)
 
@@ -143,16 +152,14 @@ func (h *Handler) CreateDirectMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllDirectMessages(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	directMessages, err := h.directMessageService.GetAllDirectMessages(userId)
+	directMessages, err := h.directMessageService.GetAllDirectMessages(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -163,23 +170,21 @@ func (h *Handler) GetAllDirectMessages(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetOneDirectMessageByParticipants(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	participant1Id := utils.GetQueryParam(r, "participant1Id", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	participant2Id := utils.GetQueryParam(r, "participant2Id", "number", &err).(uint64)
+	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	participants := []uint64{participant1Id, participant2Id}
+	participants := []uint64{user.Id, userId}
 
 	directMessage, err := h.directMessageService.GetOneDirectMessageByParticipants(participants)
 

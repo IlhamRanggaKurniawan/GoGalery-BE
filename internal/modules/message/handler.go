@@ -31,6 +31,13 @@ func (h *Handler) SendPrivateMessage(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
+	
+	user, err := utils.DecodeAccessToken(r)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	var input input
 
@@ -41,7 +48,7 @@ func (h *Handler) SendPrivateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := h.messageService.SendMessage(input.SenderId, conversationId, 0, input.Message)
+	message, err := h.messageService.SendMessage(user.Id, conversationId, 0, input.Message)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -61,6 +68,13 @@ func (h *Handler) SendGroupMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := utils.DecodeAccessToken(r)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
 	var input input
 
 	err = json.NewDecoder(r.Body).Decode(&input)
@@ -70,7 +84,7 @@ func (h *Handler) SendGroupMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := h.messageService.SendMessage(input.SenderId, 0, conversationId, input.Message)
+	message, err := h.messageService.SendMessage(user.Id, 0, conversationId, input.Message)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

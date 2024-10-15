@@ -43,7 +43,6 @@ func SendEmailOTP(to string, otp string) error {
     </html>
     `, otp)
 
-    // Gabungkan subject dan body email
     message := []byte(subject + "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n" + body)
 
     auth := smtp.PlainAuth("", senderEmail, senderPassword, smtpHost)

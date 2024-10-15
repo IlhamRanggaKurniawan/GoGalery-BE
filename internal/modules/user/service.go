@@ -13,7 +13,7 @@ type UserService interface {
 	UpdateUser(id uint64, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
 	UpdateUserByEmail(email string, bio *string, profileUrl *string, password *string, token *string) (*entity.User, error)
 	FindAllUsersByUsername(username string) (*[]entity.User, error)
-	FindAllMutualUsers(userId uint64) (*[]entity.User, error)
+	FindAllMutualUsers(userId uint64, username string) (*[]entity.User, error)
 	FindOneUserByUsername(username string) (*entity.User, error)
 	DeleteUser(id uint64) error
 }
@@ -139,9 +139,9 @@ func (s *userService) FindAllUsersByUsername(username string) (*[]entity.User, e
 	return users, nil
 }
 
-func (s *userService) FindAllMutualUsers(userId uint64) (*[]entity.User, error) {
+func (s *userService) FindAllMutualUsers(userId uint64, username string) (*[]entity.User, error) {
 
-	users, err := s.userRepository.FindAllMutualUsers(userId)
+	users, err := s.userRepository.FindAllMutualUsers(userId, username)
 
 	if err != nil {
 		return nil, err

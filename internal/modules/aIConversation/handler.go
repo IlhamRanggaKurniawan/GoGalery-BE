@@ -15,16 +15,14 @@ func NewHandler(aIConversationService AIConversationService) Handler {
 }
 
 func (h *Handler) CreateConversation(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	conversation, err := h.aIConversationService.CreateConversation(userId)
+	conversation, err := h.aIConversationService.CreateConversation(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -35,16 +33,14 @@ func (h *Handler) CreateConversation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetConversation(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 	
-	conversation, _ := h.aIConversationService.GetConversation(userId)
+	conversation, _ := h.aIConversationService.GetConversation(user.Id)
 
 	utils.SuccessResponse(w, conversation)
 }

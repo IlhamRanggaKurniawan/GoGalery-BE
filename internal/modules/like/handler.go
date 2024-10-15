@@ -1,7 +1,6 @@
 package like
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
@@ -31,16 +30,14 @@ func (h *Handler) LikeContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var input input
-
-	err = json.NewDecoder(r.Body).Decode(&input)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	like, err := h.likeContentService.LikeContent(input.UserId, contentId)
+	like, err := h.likeContentService.LikeContent(user.Id, contentId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -60,14 +57,9 @@ func (h *Handler) GetOneLike(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
-	if err != nil {
-		utils.ErrorResponse(w, err, http.StatusBadRequest)
-		return
-	}
-
-	like, err := h.likeContentService.GetOneLike(userId, contentId)
+	like, err := h.likeContentService.GetOneLike(user.Id, contentId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

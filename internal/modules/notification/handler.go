@@ -21,23 +21,21 @@ func NewHandler(notificationService NotificationService) Handler {
 }
 
 func (h *Handler) GetAllNotifications(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	receiverId := utils.GetPathParam(r, "receiverId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	notifications, err := h.notificationService.GetAllNotifications(receiverId)
+	notifications, err := h.notificationService.GetAllNotifications(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	notifications, err = h.notificationService.UpdateNotifications(receiverId)
+	notifications, err = h.notificationService.UpdateNotifications(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -48,16 +46,14 @@ func (h *Handler) GetAllNotifications(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteNotifications(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	receiverId := utils.GetPathParam(r, "receiverId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.notificationService.DeleteNotifications(receiverId)
+	err = h.notificationService.DeleteNotifications(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

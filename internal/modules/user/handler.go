@@ -20,6 +20,7 @@ type Handler struct {
 	BucketName  string
 	Redis       *redis.Client
 	SameSite    http.SameSite
+	Domain      string
 }
 
 type input struct {
@@ -41,11 +42,14 @@ var appEnv = os.Getenv("APP_ENV")
 
 func NewHandler(userService UserService, s3Client *s3.Client, bucketName string, Redis *redis.Client) Handler {
 	var sameSite http.SameSite
+	var domain string
 
 	if appEnv == "production" {
 		sameSite = http.SameSiteNoneMode
+		domain = "gogalery.my.id"
 	} else {
 		sameSite = http.SameSiteLaxMode
+		domain = "localhost"
 	}
 
 	return Handler{
@@ -54,6 +58,7 @@ func NewHandler(userService UserService, s3Client *s3.Client, bucketName string,
 		BucketName:  bucketName,
 		Redis:       Redis,
 		SameSite:    sameSite,
+		Domain:      domain,
 	}
 }
 
@@ -100,7 +105,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour * 7),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -111,7 +116,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -169,7 +174,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour * 7),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -180,7 +185,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -200,9 +205,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	utils.SuccessResponse(w, res)
 }
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -215,7 +218,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -226,14 +229,14 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
 
 	token := ""
 
-	_, err = h.userService.UpdateUser(userId, nil, nil, nil, &token)
+	_, err = h.userService.UpdateUser(user.Id, nil, nil, nil, &token)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -250,9 +253,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	decodedUserToken, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -294,7 +295,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userService.UpdateUser(userId, &bio, &url, &password, nil)
+	user, err := h.userService.UpdateUser(decodedUserToken.Id, &bio, &url, &password, nil)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -326,16 +327,21 @@ func (h *Handler) FindAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) FindAllMutualUsers(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	users, err := h.userService.FindAllMutualUsers(userId)
+	username := utils.GetPathParam(r, "username", "string", &err).(string)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	users, _ := h.userService.FindAllMutualUsers(user.Id, username)
 
 	utils.SuccessResponse(w, users)
 }
@@ -361,16 +367,14 @@ func (h *Handler) FindOneUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = h.userService.DeleteUser(userId)
+	err = h.userService.DeleteUser(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -383,7 +387,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -394,7 +398,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})
@@ -437,7 +441,7 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(5 * time.Minute),
 		Secure:   appEnv == "production",
 		HttpOnly: true,
-		Domain:   "gogalery.my.id",
+		Domain:   h.Domain,
 		SameSite: h.SameSite,
 		Path:     "/",
 	})

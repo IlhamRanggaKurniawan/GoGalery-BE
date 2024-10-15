@@ -2,6 +2,8 @@ package utils
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -12,9 +14,9 @@ var REFRESH_TOKEN_SECRET = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
 var ACCESS_TOKEN_SECRET = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
 
 type Claims struct {
+	Id         uint64 `json:"id"`
 	Username   string `json:"username"`
 	Email      string `json:"email"`
-	Id         uint64 `json:"id"`
 	Role       string `json:"role"`
 	ProfileUrl string `json:"profileUrl"`
 	Bio        string `json:"bio"`
@@ -112,4 +114,27 @@ func ValidateToken(tokenString string, tokenType string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+func DecodeAccessToken(r *http.Request) (*Claims, error) {
+
+	cookie, err := r.Cookie("AccessToken")
+    if err != nil {
+        return nil, fmt.Errorf("could not find access token in cookies: %v", err)
+    }
+
+    token, err := jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+        return ACCESS_TOKEN_SECRET, nil
+    })
+
+    if err != nil || !token.Valid {
+        return nil, fmt.Errorf("invalid token: %v", err)
+    }
+
+    claims, ok := token.Claims.(*Claims)
+    if !ok {
+        return nil, fmt.Errorf("failed to parse claims")
+    }
+
+    return claims, nil
 }

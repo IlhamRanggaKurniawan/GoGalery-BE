@@ -34,7 +34,6 @@ func UploadFileToS3(s3Client *s3.Client, file multipart.File, fileName string, b
 	}
 
 	return fmt.Sprintf("https://%s.s3.ap-southeast-1.amazonaws.com/%s", bucketName, fullPath), nil
-
 }
 
 func UpdateFileInS3(s3Client *s3.Client, file multipart.File, path string, bucketName string) (string, error) {

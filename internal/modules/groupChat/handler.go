@@ -58,14 +58,14 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	groupId := utils.GetQueryParam(r, "groupId", "number", &err).(uint64)
+	groupId := utils.GetPathParam(r, "groupId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -74,7 +74,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	existingConnections := connections[groupId]
 	for _, existingConn := range existingConnections {
-		if existingConn.UserId == userId {
+		if existingConn.UserId == user.Id {
 			existingConn.Conn.Close()
 			connections[groupId] = removeConnection(groupId, existingConn)
 			break
@@ -82,7 +82,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newConn := &connection{
-		UserId:  userId,
+		UserId:  user.Id,
 		Conn:    conn,
 		GroupId: groupId,
 	}
@@ -95,7 +95,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newMessage, err := h.messageRepository.Create(userId, 0, groupId, string(message))
+		newMessage, err := h.messageRepository.Create(user.Id, 0, groupId, string(message))
 		if err != nil {
 			utils.ErrorResponse(w, err, http.StatusInternalServerError)
 			return
@@ -174,16 +174,14 @@ func (h *Handler) AddMembers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllGroupChats(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	groups, err := h.groupChatService.GetAllGroupChats(userId)
+	groups, err := h.groupChatService.GetAllGroupChats(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -243,9 +241,7 @@ func (h *Handler) UpdateGroupChat(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) LeaveGroupChat(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -259,7 +255,7 @@ func (h *Handler) LeaveGroupChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.groupChatService.LeaveGroupChat(userId, groupId)
+	err = h.groupChatService.LeaveGroupChat(user.Id, groupId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -274,6 +270,7 @@ func (h *Handler) LeaveGroupChat(w http.ResponseWriter, r *http.Request) {
 
 	utils.SuccessResponse(w, resp)
 }
+
 func (h *Handler) DeleteGroupChat(w http.ResponseWriter, r *http.Request) {
 	var err error
 

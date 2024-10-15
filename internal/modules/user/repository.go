@@ -9,7 +9,7 @@ import (
 
 type UserRepository interface {
 	Create(username string, email string, password string) (*entity.User, error)
-	FindAllMutualUsers(userId uint64) (*[]entity.User, error)
+	FindAllMutualUsers(userId uint64, username string) (*[]entity.User, error)
 	FindAllByUsername(username string) (*[]entity.User, error)
 	FindOneByUsername(username string) (*entity.User, error)
 	FindOneById(id uint64) (*entity.User, error)
@@ -42,14 +42,15 @@ func (r *userRepository) Create(username string, email string, password string) 
 	return &user, nil
 }
 
-func (r *userRepository) FindAllMutualUsers(userId uint64) (*[]entity.User, error) {
+func (r *userRepository) FindAllMutualUsers(userId uint64, username string) (*[]entity.User, error) {
 	var users []entity.User
 
+	searchUsername := "%" + username + "%"
 	err := r.db.Table("users").
 		Select("users.*").
 		Joins("JOIN follows f1 ON f1.follower_id = users.id").
 		Joins("JOIN follows f2 ON f2.following_id = users.id AND f2.follower_id = ?", userId).
-		Where("f1.following_id = ?", userId).
+		Where("f1.following_id = ? AND users.username ILIKE ?", userId, searchUsername).
 		Scan(&users).Error
 
 	return &users, err
@@ -58,7 +59,7 @@ func (r *userRepository) FindAllMutualUsers(userId uint64) (*[]entity.User, erro
 func (r *userRepository) FindAllByUsername(username string) (*[]entity.User, error) {
 	var users []entity.User
 
-	err := r.db.Where("username LIKE ?", "%"+username+"%").Find(&users).Error
+	err := r.db.Where("username ILIKE ?", "%"+username+"%").Find(&users).Error
 
 	return &users, err
 }

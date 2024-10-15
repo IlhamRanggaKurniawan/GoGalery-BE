@@ -63,42 +63,35 @@ func NewHandler(service ContentService, s3Client *s3.Client, bucketName string, 
 }
 
 func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
-
 	const maxUploadSize = 15 << 20
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
 
 	err := r.ParseMultipartForm(maxUploadSize)
+
 	if err != nil {
-		http.Error(w, "Maximum file size is 15MB", http.StatusBadRequest)
+		utils.ErrorResponse(w, fmt.Errorf("maximum file size is 15MB"), http.StatusBadRequest)
 		return
 	}
 
 	file, handler, err := r.FormFile("file")
 
 	if err != nil {
-		fmt.Fprintf(w, "Error retrieving the file: %v", err)
+		utils.ErrorResponse(w, fmt.Errorf("error retrieving the file: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	uploaderIdStr := r.FormValue("uploaderId")
-
-	if uploaderIdStr == "" {
-		http.Error(w, "uploaderId must be filled", http.StatusBadRequest)
-		return
-	}
-
-	uploaderId, err := strconv.ParseUint(uploaderIdStr, 10, 64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
-		http.Error(w, "Invalid number parameter for 'uploaderId'", http.StatusBadRequest)
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
 	caption := r.FormValue("caption")
 
 	if caption == "" {
-		http.Error(w, "caption must be filled", http.StatusBadRequest)
+		utils.ErrorResponse(w, fmt.Errorf("caption must be filled"), http.StatusBadRequest)
 		return
 	}
 
@@ -111,7 +104,7 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 	} else if strings.HasPrefix(fileType, "video/") {
 		contentType = "video"
 	} else {
-		http.Error(w, "Unsupported file type", http.StatusBadRequest)
+		utils.ErrorResponse(w, fmt.Errorf("unsupported file type"), http.StatusBadRequest)
 		return
 	}
 
@@ -122,11 +115,11 @@ func (h *Handler) UploadContent(w http.ResponseWriter, r *http.Request) {
 	fileUrl, err := utils.UploadFileToS3(h.S3Client, file, newFileName, h.BucketName, "Content")
 
 	if err != nil {
-		fmt.Fprintf(w, "Unable to upload file to S3: %v", err)
+		utils.ErrorResponse(w, fmt.Errorf("unable to upload file to S3: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	content, err := h.contentService.UploadContent(uploaderId, caption, fileUrl, contentType)
+	content, err := h.contentService.UploadContent(user.Id, caption, fileUrl, contentType)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -166,9 +159,7 @@ func (h *Handler) UpdateContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -219,7 +210,7 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 		go func(index int, contentId uint64) {
 			defer wg.Done()
 
-			like, _ := h.likeService.GetOneLike(userId, contentId)
+			like, _ := h.likeService.GetOneLike(user.Id, contentId)
 
 			var likeId uint64
 			if like != nil {
@@ -238,7 +229,7 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 		go func(index int, contentId uint64) {
 			defer wg.Done()
 
-			save, _ := h.saveService.GetOneSave(userId, contentId)
+			save, _ := h.saveService.GetOneSave(user.Id, contentId)
 
 			var saveId uint64
 			if save != nil {
@@ -284,16 +275,14 @@ func (h *Handler) GetAllContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
-
+	user, err := utils.DecodeAccessToken(r)
+	
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
-
-	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+	
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -318,7 +307,7 @@ func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		like, _ := h.likeService.GetOneLike(userId, contentId)
+		like, _ := h.likeService.GetOneLike(user.Id, contentId)
 
 		var likeId uint64
 		if like != nil {
@@ -336,7 +325,7 @@ func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		save, _ := h.saveService.GetOneSave(userId, contentId)
+		save, _ := h.saveService.GetOneSave(user.Id, contentId)
 
 		var saveId uint64
 		if save != nil {
@@ -364,16 +353,14 @@ func (h *Handler) GetOneContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	contents, err := h.contentService.GetAllContentsByFollowing(userId)
+	contents, err := h.contentService.GetAllContentsByFollowing(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -401,7 +388,7 @@ func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Reques
 		go func(index int, contentId uint64) {
 			defer wg.Done()
 
-			like, _ := h.likeService.GetOneLike(userId, contentId)
+			like, _ := h.likeService.GetOneLike(user.Id, contentId)
 
 			var likeId uint64
 			if like != nil {
@@ -420,7 +407,7 @@ func (h *Handler) GetAllContentByFollowing(w http.ResponseWriter, r *http.Reques
 		go func(index int, contentId uint64) {
 			defer wg.Done()
 
-			save, _ := h.saveService.GetOneSave(userId, contentId)
+			save, _ := h.saveService.GetOneSave(user.Id, contentId)
 
 			var saveId uint64
 			if save != nil {

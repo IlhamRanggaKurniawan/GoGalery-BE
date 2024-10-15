@@ -20,9 +20,7 @@ func NewHandler(feedbackService FeedbackService) Handler {
 }
 
 func (h *Handler) SendFeedback(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -38,7 +36,7 @@ func (h *Handler) SendFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feedback, err := h.feedbackService.SendFeedback(userId, input.Message)
+	feedback, err := h.feedbackService.SendFeedback(user.Id, input.Message)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

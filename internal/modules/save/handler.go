@@ -1,7 +1,6 @@
 package save
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/utils"
@@ -30,16 +29,14 @@ func (h *Handler) SaveContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var input input
-
-	err = json.NewDecoder(r.Body).Decode(&input)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	save, err := h.saveContentService.SaveContent(input.UserId, contentId)
+	save, err := h.saveContentService.SaveContent(user.Id, contentId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -50,16 +47,14 @@ func (h *Handler) SaveContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllSaves(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	contents, err := h.saveContentService.GetAllSaves(userId)
+	contents, err := h.saveContentService.GetAllSaves(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -70,9 +65,7 @@ func (h *Handler) GetAllSaves(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetOneSave(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetQueryParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -86,7 +79,7 @@ func (h *Handler) GetOneSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := h.saveContentService.GetOneSave(userId, contentId)
+	content, err := h.saveContentService.GetOneSave(user.Id, contentId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

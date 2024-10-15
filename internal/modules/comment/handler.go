@@ -22,7 +22,12 @@ func NewHandler(commentService CommentService) Handler {
 }
 
 func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
-	var err error
+	user, err := utils.DecodeAccessToken(r)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
@@ -40,7 +45,7 @@ func (h *Handler) SendComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := h.commentService.SendComment(input.UserId, contentId, input.Message)
+	content, err := h.commentService.SendComment(user.Id, contentId, input.Message)
 
 	utils.SuccessResponse(w, content)
 }

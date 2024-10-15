@@ -23,16 +23,24 @@ func NewHandler(followService FollowService) Handler {
 }
 
 func (h *Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
-	var input input
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	follow, err := h.followService.followUser(input.FollowerId, input.FollowingId)
+	var input input
+
+	err = json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	follow, err := h.followService.followUser(user.Id, input.FollowingId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -45,7 +53,7 @@ func (h *Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetAllFollows(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -56,12 +64,12 @@ func (h *Handler) GetAllFollows(w http.ResponseWriter, r *http.Request) {
 	followingChan := make(chan *[]entity.Follow)
 
 	go func() {
-		follower, _ := h.followService.GetAllFollower(userId)
+		follower, _ := h.followService.GetAllFollower(user.Id)
 		followerChan <- follower
 	}()
 
 	go func() {
-		following, _ := h.followService.GetAllFollowing(userId)
+		following, _ := h.followService.GetAllFollowing(user.Id)
 		followingChan <- following
 	}()
 
@@ -77,9 +85,7 @@ func (h *Handler) GetAllFollows(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CountFollow(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	userId := utils.GetPathParam(r, "userId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -90,12 +96,12 @@ func (h *Handler) CountFollow(w http.ResponseWriter, r *http.Request) {
 	followingChan := make(chan int64)
 
 	go func() {
-		follower, _ := h.followService.CountFollower(userId)
+		follower, _ := h.followService.CountFollower(user.Id)
 		followerChan <- follower
 	}()
 
 	go func() {
-		following, _ := h.followService.CountFollowing(userId)
+		following, _ := h.followService.CountFollowing(user.Id)
 		followingChan <- following
 	}()
 
@@ -111,9 +117,7 @@ func (h *Handler) CountFollow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CheckFollowing(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	followerId := utils.GetQueryParam(r, "followerId", "number", &err).(uint64)
+	user, err := utils.DecodeAccessToken(r)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
@@ -127,7 +131,7 @@ func (h *Handler) CheckFollowing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	follow, err := h.followService.CheckFollowing(followerId, followingId)
+	follow, err := h.followService.CheckFollowing(user.Id, followingId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

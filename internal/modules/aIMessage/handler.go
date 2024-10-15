@@ -23,7 +23,12 @@ func NewHandler(aIMessageService AIMessageService) Handler {
 }
 
 func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
-	var err error
+	user, err := utils.DecodeAccessToken(r)
+
+	if err != nil {
+		utils.ErrorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
 	conversationId := utils.GetPathParam(r, "conversationId", "number", &err).(uint64)
 
@@ -41,7 +46,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := h.aIMessageService.SendMessage(input.SenderId, conversationId, input.Prompt)
+	message, err := h.aIMessageService.SendMessage(user.Id, conversationId, input.Prompt)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
