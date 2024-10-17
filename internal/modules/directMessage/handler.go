@@ -2,6 +2,7 @@ package directmessage
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -48,6 +49,9 @@ var connections = make(map[uint64][]*connection)
 
 func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
+
+	fmt.Println(err)
+
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
@@ -55,6 +59,8 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	dmId := utils.GetPathParam(r, "dmId", "number", &err).(uint64)
+
+	fmt.Println(dmId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)

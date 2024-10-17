@@ -1,7 +1,6 @@
 package follow
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/IlhamRanggaKurniawan/ConnectVerse-BE/internal/database/entity"
@@ -10,12 +9,6 @@ import (
 
 type Handler struct {
 	followService FollowService
-}
-
-type input struct {
-	UserId      uint64 `json:"userId"`
-	FollowerId  uint64 `json:"followerId"`
-	FollowingId uint64 `json:"followingId"`
 }
 
 func NewHandler(followService FollowService) Handler {
@@ -31,16 +24,14 @@ func (h *Handler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var input input
-
-	err = json.NewDecoder(r.Body).Decode(&input)
+	followingId := utils.GetPathParam(r, "followingId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	follow, err := h.followService.followUser(user.Id, input.FollowingId)
+	follow, err := h.followService.followUser(user.Id, followingId)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
@@ -124,19 +115,14 @@ func (h *Handler) CheckFollowing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	followingId := utils.GetQueryParam(r, "followingId", "number", &err).(uint64)
+	followingId := utils.GetPathParam(r, "followingId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	follow, err := h.followService.CheckFollowing(user.Id, followingId)
-
-	if err != nil {
-		utils.ErrorResponse(w, err, http.StatusInternalServerError)
-		return
-	}
+	follow, _ := h.followService.CheckFollowing(user.Id, followingId)
 
 	utils.SuccessResponse(w, follow)
 }

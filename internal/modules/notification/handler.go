@@ -10,12 +10,6 @@ type Handler struct {
 	notificationService NotificationService
 }
 
-type input struct {
-	ReceiverId uint64 `json:"receiverId"`
-	TriggerId  uint64 `json:"triggerId"`
-	Content    string `json:"content"`
-}
-
 func NewHandler(notificationService NotificationService) Handler {
 	return Handler{notificationService}
 }
@@ -28,14 +22,14 @@ func (h *Handler) GetAllNotifications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifications, err := h.notificationService.GetAllNotifications(user.Id)
+	_, err = h.notificationService.GetAllNotifications(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	notifications, err = h.notificationService.UpdateNotifications(user.Id)
+	notifications, err := h.notificationService.UpdateNotifications(user.Id)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusInternalServerError)

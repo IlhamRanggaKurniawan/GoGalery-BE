@@ -26,8 +26,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			"/v1/user",
 			"/v1/user/login",
 			"/v1/token",
-			"/ws/direct",
-			"/ws/group",
 		}
 
 		for _, route := range unprotectedRoutes {
@@ -35,6 +33,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
+		}
+
+		if strings.HasPrefix(r.URL.Path, "/ws/") {
+			next.ServeHTTP(w, r)
+			return
 		}
 
 		if strings.HasPrefix(r.URL.Path, "/v1/otp/") {

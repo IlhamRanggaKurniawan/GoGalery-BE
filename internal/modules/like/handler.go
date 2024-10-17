@@ -10,27 +10,19 @@ type Handler struct {
 	likeContentService LikeContentService
 }
 
-type input struct {
-	Id        uint64 `json:"id"`
-	UserId    uint64 `json:"userId"`
-	ContentId uint64 `json:"contentId"`
-}
-
 func NewHandler(likeContentService LikeContentService) Handler {
 	return Handler{likeContentService}
 }
 
 func (h *Handler) LikeContent(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
-
+	user, err := utils.DecodeAccessToken(r)
+	
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)
 		return
 	}
-
-	user, err := utils.DecodeAccessToken(r)
+	
+	contentId := utils.GetPathParam(r, "contentId", "number", &err).(uint64)
 
 	if err != nil {
 		utils.ErrorResponse(w, err, http.StatusBadRequest)

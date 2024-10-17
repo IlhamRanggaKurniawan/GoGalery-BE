@@ -121,7 +121,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("POST /v1/direct", directMessageHandler.CreateDirectMessage)
 	mux.HandleFunc("/ws/direct/{dmId}", directMessageHandler.HandleWebSocket)
 	mux.HandleFunc("GET /v1/directs", directMessageHandler.GetAllDirectMessages)
-	mux.HandleFunc("GET /v1/direct/{userId}", directMessageHandler.GetOneDirectMessageByParticipants)
+	mux.HandleFunc("GET /v1/direct/user/{userId}", directMessageHandler.GetOneDirectMessageByParticipants)
 	mux.HandleFunc("GET /v1/direct/{dmId}", directMessageHandler.GetOneDirectMessage)
 	mux.HandleFunc("DELETE /v1/direct/{dmId}", directMessageHandler.DeleteDirectMessage)
 
@@ -141,9 +141,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("POST /v1/ai/message/{conversationId}", aiMessageHandler.SendMessage)
 	mux.HandleFunc("DELETE /v1/ai/message/{messageId}", aiMessageHandler.DeleteMessage)
 
-	mux.HandleFunc("POST /v1/follow", followHandler.FollowUser)
+	mux.HandleFunc("POST /v1/follow/{followingId}", followHandler.FollowUser)
 	mux.HandleFunc("GET /v1/follows/{userId}", followHandler.CountFollow)
-	mux.HandleFunc("GET /v1/follow", followHandler.CheckFollowing)
+	mux.HandleFunc("GET /v1/follow/{followingId}", followHandler.CheckFollowing)
 	mux.HandleFunc("DELETE /v1/follow/{followId}", followHandler.UnfollowUser)
 
 	mux.HandleFunc("GET /v1/notifications", notificationHandler.GetAllNotifications)
